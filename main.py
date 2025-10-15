@@ -13,7 +13,7 @@ from schemas.config import get_settings
 async def enhanced_analysis(user_query: str, verbose: bool = False):
     """增强的多智能体分析系统"""
     settings = get_settings()
-    os.environ["DATA_PATH"] = "D:/codewen_workspace/AIGC_Work/auto_analyze/data"
+    os.environ["DATA_PATH"] = "D:/codewen_workspace/DM-AI/auto_analyze/data"
 
     # 设置详细日志模式
     if verbose:

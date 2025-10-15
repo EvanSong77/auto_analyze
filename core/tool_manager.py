@@ -425,7 +425,7 @@ class ToolManager:
             logger.warning(f"工具已存在，将被覆盖: {tool.name}")
 
         self.tools[tool.name] = tool
-        logger.debug(f"注册工具: {tool.name}")
+        logger.info(f"注册工具: {tool.name}")
 
     def unregister_tool(self, tool_name: str) -> bool:
         """注销工具
@@ -438,7 +438,7 @@ class ToolManager:
         """
         if tool_name in self.tools:
             del self.tools[tool_name]
-            logger.debug(f"注销工具: {tool_name}")
+            logger.info(f"注销工具: {tool_name}")
             return True
         return False
 

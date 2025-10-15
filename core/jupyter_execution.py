@@ -134,7 +134,6 @@ warnings.filterwarnings("ignore")"""
                 os.chdir(workspace)
                 # 设置内核的工作目录
                 setup_code += f"\nimport os\nos.chdir('{workspace.replace('\\', '/')}')\n"
-                logger.info(f"设置工作目录: {setup_code}")
 
             # 发送代码到内核执行
             self.executions[execution_id]["is_executing"] = True

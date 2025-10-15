@@ -92,7 +92,7 @@ class BaseAgent(ABC):
                 "content": task_prompt
             })
 
-            logger.debug(f"[{self.role.value}] 发送任务提示: {task_prompt[:100]}...")
+            logger.info(f"[{self.role.value}] 发送任务提示: {task_prompt[:100]}...")
 
             # 获取模型响应
             response = await self.model_client.chat_completion(
@@ -108,7 +108,7 @@ class BaseAgent(ABC):
                 message = response["message"]
                 self.messages.append(message)
 
-                logger.debug(f"[{self.role.value}] 收到模型响应: {message.get('content', '')[:200]}...")
+                logger.info(f"[{self.role.value}] 收到模型响应: {message.get('content', '')[:200]}...")
 
                 # 处理工具调用
                 if message.get("tool_calls"):
@@ -119,7 +119,7 @@ class BaseAgent(ABC):
                         tool_name = function_call["name"]
                         args = json.loads(function_call["arguments"])
 
-                        logger.debug(f"[{self.role.value}] 执行工具 {i + 1}: {tool_name} - 参数: {args}")
+                        logger.info(f"[{self.role.value}] 执行工具 {i + 1}: {tool_name} - 参数: {args}")
 
                         # 执行工具
                         result = await self.tool_manager.execute_tool(
@@ -127,8 +127,7 @@ class BaseAgent(ABC):
                             arguments=args,
                             context={"conversation_id": self.conversation_id}
                         )
-
-                        logger.debug(f"[{self.role.value}] 工具 {tool_name} 执行结果: 成功={result.success}")
+                        logger.info(f"[{self.role.value}] 工具 {tool_name} 执行结果: 成功={result.success}")
 
                         # 添加工具结果
                         self.messages.append({
@@ -223,7 +222,7 @@ class ManagerAgent(BaseAgent):
             raise RuntimeError(f"需求分析失败: {response.get('error')}")
 
         content = response["message"]["content"]
-        logger.debug(f"[manager] 需求分析响应: {content[:500]}...")
+        logger.info(f"[manager] 需求分析响应: {content[:500]}...")
 
         try:
             # 提取JSON部分
@@ -246,7 +245,7 @@ class ManagerAgent(BaseAgent):
 
             logger.info(f"[manager] 成功生成 {len(tasks)} 个分析任务")
             for task in tasks:
-                logger.debug(f"[manager] 任务: {task.id} - {task.description} - {task.agent_role.value}")
+                logger.info(f"[manager] 任务: {task.id} - {task.description} - {task.agent_role.value}")
 
             return tasks
 
@@ -475,7 +474,7 @@ class MultiAgentSystem:
 
             logger.info(f"本轮可执行任务: {len(ready_tasks)} 个")
             for task in ready_tasks:
-                logger.debug(f"可执行任务: {task.id} - {task.description}")
+                logger.info(f"可执行任务: {task.id} - {task.description}")
 
             # 并行执行就绪的任务
             tasks_to_execute = []
