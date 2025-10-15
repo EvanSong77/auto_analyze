@@ -1,0 +1,132 @@
+2025-10-15 14:26:53,443 - config.py:154 - INFO - 用户模型未配置，使用主模型配置
+2025-10-15 14:26:53,449 - config.py:250 - INFO - 从文件加载配置: config.yaml
+2025-10-15 14:26:55,937 - tool_manager.py:416 - INFO - 已注册 4 个工具
+2025-10-15 14:26:55,937 - enhanced_system.py:51 - INFO - 开始增强分析: 帮我分析销售数据，找出3月份业绩最好的产品，并生成详细的HTML报告
+2025-10-15 14:26:55,937 - collaboration.py:274 - INFO - 使用增强系统处理请求: 帮我分析销售数据，找出3月份业绩最好的产品，并生成详细的HTML报告
+2025-10-15 14:26:55,937 - collaboration.py:69 - INFO - 发送消息: manager -> analyst
+2025-10-15 14:26:55,937 - collaboration.py:69 - INFO - 发送消息: manager -> visualizer
+2025-10-15 14:26:55,937 - collaboration.py:69 - INFO - 发送消息: manager -> reporter
+2025-10-15 14:26:55,937 - collaboration.py:69 - INFO - 发送消息: manager -> qa
+2025-10-15 14:26:55,937 - multi_agent_system.py:185 - INFO - [manager] 开始分析用户需求: 帮我分析销售数据，找出3月份业绩最好的产品，并生成详细的HTML报告
+2025-10-15 14:27:13,659 - multi_agent_system.py:247 - INFO - [manager] 成功生成 11 个分析任务
+2025-10-15 14:27:13,659 - collaboration.py:69 - INFO - 发送消息: manager -> analyst
+2025-10-15 14:27:13,660 - multi_agent_system.py:82 - INFO - [analyst] 开始处理任务: 探索销售数据的基本结构和字段含义，了解数据质量状况
+2025-10-15 14:27:15,053 - multi_agent_system.py:115 - INFO - [analyst] 检测到工具调用: 1 个
+2025-10-15 14:27:15,053 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:27:15,054 - multi_agent_system.py:144 - INFO - [analyst] 任务完成: 探索销售数据的基本结构和字段含义，了解数据质量状况
+2025-10-15 14:27:15,054 - collaboration.py:69 - INFO - 发送消息: analyst -> qa
+2025-10-15 14:27:15,054 - collaboration.py:69 - INFO - 发送消息: manager -> analyst
+2025-10-15 14:27:15,054 - multi_agent_system.py:82 - INFO - [analyst] 开始处理任务: 清洗数据：处理缺失值、异常值，统一日期格式和产品名称格式
+2025-10-15 14:27:16,779 - multi_agent_system.py:115 - INFO - [analyst] 检测到工具调用: 1 个
+2025-10-15 14:27:16,779 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:27:16,779 - multi_agent_system.py:144 - INFO - [analyst] 任务完成: 清洗数据：处理缺失值、异常值，统一日期格式和产品名称格式
+2025-10-15 14:27:16,779 - collaboration.py:69 - INFO - 发送消息: analyst -> qa
+2025-10-15 14:27:16,779 - collaboration.py:69 - INFO - 发送消息: manager -> analyst
+2025-10-15 14:27:16,779 - multi_agent_system.py:82 - INFO - [analyst] 开始处理任务: 筛选3月份销售数据，并按照产品维度聚合销售额和销量
+2025-10-15 14:27:18,123 - multi_agent_system.py:115 - INFO - [analyst] 检测到工具调用: 1 个
+2025-10-15 14:27:18,123 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:27:18,124 - multi_agent_system.py:144 - INFO - [analyst] 任务完成: 筛选3月份销售数据，并按照产品维度聚合销售额和销量
+2025-10-15 14:27:18,124 - collaboration.py:69 - INFO - 发送消息: analyst -> qa
+2025-10-15 14:27:18,124 - collaboration.py:69 - INFO - 发送消息: manager -> analyst
+2025-10-15 14:27:18,124 - multi_agent_system.py:82 - INFO - [analyst] 开始处理任务: 计算各产品的业绩指标（销售额、销量、利润率等），识别业绩最好的产品
+2025-10-15 14:27:19,074 - multi_agent_system.py:115 - INFO - [analyst] 检测到工具调用: 1 个
+2025-10-15 14:27:19,075 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:27:19,075 - multi_agent_system.py:144 - INFO - [analyst] 任务完成: 计算各产品的业绩指标（销售额、销量、利润率等），识别业绩最好的产品
+2025-10-15 14:27:19,075 - collaboration.py:69 - INFO - 发送消息: analyst -> qa
+2025-10-15 14:27:19,076 - collaboration.py:69 - INFO - 发送消息: manager -> visualizer
+2025-10-15 14:27:19,076 - multi_agent_system.py:82 - INFO - [visualizer] 开始处理任务: 创建3月份产品销售额排名柱状图，突出显示业绩最好的产品
+2025-10-15 14:27:20,320 - multi_agent_system.py:115 - INFO - [visualizer] 检测到工具调用: 1 个
+2025-10-15 14:27:20,321 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:27:20,321 - multi_agent_system.py:144 - INFO - [visualizer] 任务完成: 创建3月份产品销售额排名柱状图，突出显示业绩最好的产品
+2025-10-15 14:27:20,321 - collaboration.py:69 - INFO - 发送消息: visualizer -> qa
+2025-10-15 14:27:20,321 - collaboration.py:69 - INFO - 发送消息: manager -> visualizer
+2025-10-15 14:27:20,321 - multi_agent_system.py:82 - INFO - [visualizer] 开始处理任务: 制作业绩最佳产品的销售趋势图（日度/周度变化）
+2025-10-15 14:27:38,797 - multi_agent_system.py:115 - INFO - [visualizer] 检测到工具调用: 1 个
+2025-10-15 14:27:38,797 - tool_manager.py:495 - INFO - 执行工具: exec_code
+2025-10-15 14:27:40,229 - multi_agent_system.py:144 - INFO - [visualizer] 任务完成: 制作业绩最佳产品的销售趋势图（日度/周度变化）
+2025-10-15 14:27:40,230 - collaboration.py:69 - INFO - 发送消息: visualizer -> qa
+2025-10-15 14:27:40,230 - collaboration.py:69 - INFO - 发送消息: manager -> visualizer
+2025-10-15 14:27:40,230 - multi_agent_system.py:82 - INFO - [visualizer] 开始处理任务: 生成产品业绩对比仪表板，包含关键指标对比
+2025-10-15 14:27:58,531 - multi_agent_system.py:115 - INFO - [visualizer] 检测到工具调用: 1 个
+2025-10-15 14:27:58,531 - tool_manager.py:495 - INFO - 执行工具: exec_code
+2025-10-15 14:27:58,531 - multi_agent_system.py:144 - INFO - [visualizer] 任务完成: 生成产品业绩对比仪表板，包含关键指标对比
+2025-10-15 14:27:58,531 - collaboration.py:69 - INFO - 发送消息: visualizer -> qa
+2025-10-15 14:27:58,532 - collaboration.py:69 - INFO - 发送消息: manager -> qa
+2025-10-15 14:27:58,532 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证数据分析结果的准确性和可视化图表的正确性
+2025-10-15 14:27:59,676 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:27:59,676 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:27:59,677 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证数据分析结果的准确性和可视化图表的正确性
+2025-10-15 14:27:59,677 - collaboration.py:69 - INFO - 发送消息: manager -> reporter
+2025-10-15 14:27:59,677 - multi_agent_system.py:82 - INFO - [reporter] 开始处理任务: 整合分析结果和可视化图表，生成详细的HTML报告框架
+2025-10-15 14:28:01,668 - multi_agent_system.py:115 - INFO - [reporter] 检测到工具调用: 1 个
+2025-10-15 14:28:01,668 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:01,668 - multi_agent_system.py:144 - INFO - [reporter] 任务完成: 整合分析结果和可视化图表，生成详细的HTML报告框架
+2025-10-15 14:28:01,668 - collaboration.py:69 - INFO - 发送消息: manager -> reporter
+2025-10-15 14:28:01,668 - multi_agent_system.py:82 - INFO - [reporter] 开始处理任务: 完善HTML报告，添加分析结论、建议和格式美化
+2025-10-15 14:28:02,943 - multi_agent_system.py:115 - INFO - [reporter] 检测到工具调用: 1 个
+2025-10-15 14:28:02,943 - tool_manager.py:495 - INFO - 执行工具: read_files
+2025-10-15 14:28:02,944 - multi_agent_system.py:144 - INFO - [reporter] 任务完成: 完善HTML报告，添加分析结论、建议和格式美化
+2025-10-15 14:28:02,944 - collaboration.py:69 - INFO - 发送消息: manager -> qa
+2025-10-15 14:28:02,944 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 最终质量检查，确保报告内容完整、格式规范
+2025-10-15 14:28:03,694 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:03,695 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:03,695 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 最终质量检查，确保报告内容完整、格式规范
+2025-10-15 14:28:03,695 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：探索销售数据的基本结构和字段含义，了解数据质量状况
+2025-10-15 14:28:04,567 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:04,568 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:04,568 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：探索销售数据的基本结构和字段含义，了解数据质量状况
+2025-10-15 14:28:04,568 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：清洗数据：处理缺失值、异常值，统一日期格式和产品名称格式
+2025-10-15 14:28:05,978 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:05,978 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:05,978 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：清洗数据：处理缺失值、异常值，统一日期格式和产品名称格式
+2025-10-15 14:28:05,978 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：筛选3月份销售数据，并按照产品维度聚合销售额和销量
+2025-10-15 14:28:07,484 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:07,484 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:07,484 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：筛选3月份销售数据，并按照产品维度聚合销售额和销量
+2025-10-15 14:28:07,484 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：计算各产品的业绩指标（销售额、销量、利润率等），识别业绩最好的产品
+2025-10-15 14:28:08,254 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:08,254 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:08,255 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：计算各产品的业绩指标（销售额、销量、利润率等），识别业绩最好的产品
+2025-10-15 14:28:08,255 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：创建3月份产品销售额排名柱状图，突出显示业绩最好的产品
+2025-10-15 14:28:09,450 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:09,450 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:09,451 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：创建3月份产品销售额排名柱状图，突出显示业绩最好的产品
+2025-10-15 14:28:09,451 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：制作业绩最佳产品的销售趋势图（日度/周度变化）
+2025-10-15 14:28:10,440 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:10,441 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:10,441 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：制作业绩最佳产品的销售趋势图（日度/周度变化）
+2025-10-15 14:28:10,441 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：生成产品业绩对比仪表板，包含关键指标对比
+2025-10-15 14:28:11,664 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:11,664 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:11,664 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：生成产品业绩对比仪表板，包含关键指标对比
+2025-10-15 14:28:11,664 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：验证数据分析结果的准确性和可视化图表的正确性
+2025-10-15 14:28:13,555 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:13,556 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:13,556 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：验证数据分析结果的准确性和可视化图表的正确性
+2025-10-15 14:28:13,556 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：整合分析结果和可视化图表，生成详细的HTML报告框架
+2025-10-15 14:28:14,810 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:14,811 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:14,811 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：整合分析结果和可视化图表，生成详细的HTML报告框架
+2025-10-15 14:28:14,811 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：完善HTML报告，添加分析结论、建议和格式美化
+2025-10-15 14:28:16,188 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:16,188 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:16,188 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：完善HTML报告，添加分析结论、建议和格式美化
+2025-10-15 14:28:16,188 - multi_agent_system.py:82 - INFO - [qa] 开始处理任务: 验证任务结果：最终质量检查，确保报告内容完整、格式规范
+2025-10-15 14:28:17,261 - multi_agent_system.py:115 - INFO - [qa] 检测到工具调用: 1 个
+2025-10-15 14:28:17,262 - tool_manager.py:495 - INFO - 执行工具: read_directory
+2025-10-15 14:28:17,262 - multi_agent_system.py:144 - INFO - [qa] 任务完成: 验证任务结果：最终质量检查，确保报告内容完整、格式规范
+2025-10-15 14:28:17,262 - multi_agent_system.py:82 - INFO - [reporter] 开始处理任务: 生成协作增强的HTML分析报告
+2025-10-15 14:28:19,428 - multi_agent_system.py:115 - INFO - [reporter] 检测到工具调用: 1 个
+2025-10-15 14:28:19,428 - tool_manager.py:495 - INFO - 执行工具: read_files
+2025-10-15 14:28:19,430 - multi_agent_system.py:144 - INFO - [reporter] 任务完成: 生成协作增强的HTML分析报告
+2025-10-15 14:28:19,430 - collaboration.py:69 - INFO - 发送消息: manager -> analyst
+2025-10-15 14:28:19,430 - collaboration.py:69 - INFO - 发送消息: manager -> visualizer
+2025-10-15 14:28:19,430 - collaboration.py:69 - INFO - 发送消息: manager -> reporter
+2025-10-15 14:28:19,430 - collaboration.py:69 - INFO - 发送消息: manager -> qa
+2025-10-15 14:28:19,430 - enhanced_system.py:55 - INFO - 分析结果: 我将为您生成一个协作增强的HTML分析报告。让我首先读取可用的数据文件，然后创建一个包含交互式功能和协作元素的专业报告。
+2025-10-15 14:30:49,191 - enhanced_system.py:80 - INFO - 分析完成，耗时: 233.25秒
+2025-10-15 14:30:49,465 - base_events.py:1820 - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000001FD56DC6540>
+2025-10-15 14:30:49,467 - base_events.py:1820 - ERROR - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x000001FD56D229F0>, 538151.812)]']
+connector: <aiohttp.connector.TCPConnector object at 0x000001FD56DC6210>
