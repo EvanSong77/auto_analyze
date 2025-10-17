@@ -3,35 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>销售数据分析报告 - 3月份产品业绩分析</title>
-    
-    <!-- Bootstrap 5 CSS -->
+    <title>2024年3月份销售数据分析报告</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- ECharts -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-    
-    <!-- 自定义样式 -->
     <style>
         :root {
-            --primary-color: #2c80ff;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --light-bg: #f8f9fa;
-            --dark-bg: #343a40;
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            background-color: #fff;
+            background-color: #f8f9fa;
         }
         
-        .report-header {
-            background: linear-gradient(135deg, var(--primary-color), #1a5fc9);
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 3rem 0;
             margin-bottom: 2rem;
@@ -39,113 +32,111 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
-        .section-title {
-            border-left: 5px solid var(--primary-color);
-            padding-left: 15px;
-            margin: 2rem 0 1.5rem;
-            font-weight: 600;
-            color: var(--dark-bg);
-        }
-        
-        .card {
-            border: none;
+        .section-card {
+            background: white;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
             transition: transform 0.3s ease;
         }
         
-        .card:hover {
+        .section-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
         
         .key-metric {
             text-align: center;
             padding: 1.5rem;
             border-radius: 10px;
-            margin-bottom: 1rem;
+            margin: 1rem 0;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
         }
         
         .metric-value {
             font-size: 2.5rem;
-            font-weight: 700;
-            margin: 0.5rem 0;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .metric-label {
+            font-size: 1rem;
+            color: var(--dark-color);
+            margin-top: 0.5rem;
         }
         
         .chart-container {
-            height: 400px;
             width: 100%;
-            margin: 1.5rem 0;
+            height: 400px;
+            margin: 2rem 0;
         }
         
-        .executive-summary {
-            background-color: var(--light-bg);
-            padding: 2rem;
+        .nav-pills .nav-link.active {
+            background-color: var(--secondary-color);
+        }
+        
+        .table-responsive {
             border-radius: 10px;
-            margin-bottom: 2rem;
-        }
-        
-        .conclusion-box {
-            background-color: #e8f4ff;
-            border-left: 4px solid var(--primary-color);
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .recommendation-item {
-            padding: 1rem;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
-        .table-container {
-            overflow-x: auto;
+        .table th {
+            background-color: var(--primary-color);
+            color: white;
         }
         
-        @media (max-width: 768px) {
-            .report-header {
-                padding: 2rem 0;
-            }
-            
-            .metric-value {
-                font-size: 2rem;
-            }
-            
-            .chart-container {
-                height: 300px;
-            }
+        .conclusion-box {
+            border-left: 5px solid var(--success-color);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            background-color: #f8fff9;
         }
         
-        .footer {
-            background-color: var(--dark-bg);
+        footer {
+            background-color: var(--primary-color);
             color: white;
             padding: 2rem 0;
             margin-top: 3rem;
             text-align: center;
         }
         
-        .nav-tabs .nav-link.active {
-            font-weight: 600;
-            border-bottom: 3px solid var(--primary-color);
+        .print-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        @media print {
+            .print-btn, footer, .no-print {
+                display: none;
+            }
+            
+            .section-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 打印按钮 -->
+    <button class="btn btn-primary print-btn" onclick="window.print()">打印报告</button>
+
     <!-- 标题页 -->
-    <header class="report-header">
+    <header class="header-section">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h1 class="display-4 fw-bold">销售数据分析报告</h1>
-                    <p class="lead">3月份产品业绩分析与洞察</p>
-                    <p class="mb-0">生成日期: <span id="current-date"></span></p>
+                    <h1 class="display-4 fw-bold">2024年3月份销售数据分析报告</h1>
+                    <p class="lead">识别业绩最佳产品与业务洞察</p>
+                    <p class="mb-0">生成日期: 2024年10月16日</p>
                 </div>
-                <div class="col-md-4 text-md-end">
+                <div class="col-md-4 text-end">
                     <div class="bg-white text-dark p-3 rounded d-inline-block">
-                        <small class="text-muted">分析周期</small>
+                        <small class="text-muted">数据期间</small>
                         <div class="fw-bold">2024年3月1日 - 2024年3月31日</div>
                     </div>
                 </div>
@@ -155,327 +146,506 @@
 
     <div class="container">
         <!-- 关键指标概览 -->
-        <section class="mb-5">
-            <h2 class="section-title">关键指标概览</h2>
+        <section class="section-card">
+            <h2 class="mb-4">关键指标概览</h2>
             <div class="row">
                 <div class="col-md-3">
-                    <div class="card key-metric bg-primary text-white">
-                        <h5>总销售额</h5>
-                        <div class="metric-value">¥1,254,680</div>
-                        <p>环比增长 +15.3%</p>
+                    <div class="key-metric">
+                        <div class="metric-value">¥1,252,456</div>
+                        <div class="metric-label">电子产品总销售额</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card key-metric bg-success text-white">
-                        <h5>业绩最佳产品</h5>
-                        <div class="metric-value">智能手表 Pro</div>
-                        <p>销售额 ¥286,500</p>
+                    <div class="key-metric">
+                        <div class="metric-value">28天</div>
+                        <div class="metric-label">销售活跃天数</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card key-metric bg-warning text-dark">
-                        <h5>平均订单价值</h5>
-                        <div class="metric-value">¥1,248</div>
-                        <p>同比增长 +8.7%</p>
+                    <div class="key-metric">
+                        <div class="metric-value">1,248</div>
+                        <div class="metric-label">电子产品订单量</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card key-metric bg-info text-white">
-                        <h5>产品种类</h5>
-                        <div class="metric-value">24</div>
-                        <p>3月新增2款</p>
+                    <div class="key-metric">
+                        <div class="metric-value">¥44,730</div>
+                        <div class="metric-label">日均销售额</div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- 执行摘要 -->
-        <section class="mb-5">
-            <h2 class="section-title">执行摘要</h2>
-            <div class="executive-summary">
-                <p>本报告对2024年3月份的销售数据进行了全面分析，重点识别了业绩表现最佳的产品，并提供了深入的业务洞察。</p>
-                
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <h5>主要发现：</h5>
+        <section class="section-card">
+            <h2 class="mb-4">执行摘要</h2>
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="lead">通过对2024年3月份销售数据的深入分析，我们发现电子产品类别在销售业绩中表现最为突出，成为当月最佳业绩产品。</p>
+                    
+                    <div class="conclusion-box">
+                        <h5>核心发现</h5>
                         <ul>
-                            <li><strong>智能手表 Pro</strong> 以¥286,500的销售额成为3月份业绩最佳产品</li>
-                            <li>3月份总销售额达到¥1,254,680，环比增长15.3%</li>
-                            <li>前5名产品贡献了总销售额的62%，产品集中度较高</li>
-                            <li>电子产品类别表现突出，占据销售额前10名中的6个位置</li>
+                            <li><strong>电子产品销售额达1,252,456元</strong>，占3月份总销售额的显著份额</li>
+                            <li>电子产品在3月份<strong>持续28天均有销售记录</strong>，表现稳定</li>
+                            <li>电子产品<strong>平均订单价值较高</strong>，显示出较强的盈利能力</li>
+                            <li>销售趋势显示<strong>3月中下旬表现尤为强劲</strong>，可能存在季节性因素</li>
                         </ul>
                     </div>
-                    <div class="col-md-6">
-                        <h5>关键洞察：</h5>
-                        <ul>
-                            <li>高端产品线表现优异，平均售价高的产品销售额增长更快</li>
-                            <li>促销活动对中低端产品销量提升效果明显</li>
-                            <li>3月下旬销售表现优于上旬，可能与季度末促销有关</li>
-                        </ul>
-                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div id="productShareChart" class="chart-container"></div>
                 </div>
             </div>
         </section>
 
-        <!-- 详细分析 -->
-        <section class="mb-5">
-            <h2 class="section-title">详细分析</h2>
-            
-            <!-- 导航标签 -->
-            <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
+        <!-- 数据分析导航 -->
+        <section class="section-card">
+            <h2 class="mb-4">详细分析</h2>
+            <ul class="nav nav-pills mb-4" id="analysisTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="methods-tab" data-bs-toggle="tab" data-bs-target="#methods" type="button" role="tab">分析方法</button>
+                    <button class="nav-link active" id="methodology-tab" data-bs-toggle="pill" data-bs-target="#methodology" type="button" role="tab">分析方法</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="quality-tab" data-bs-toggle="tab" data-bs-target="#quality" type="button" role="tab">数据质量</button>
+                    <button class="nav-link" id="data-quality-tab" data-bs-toggle="pill" data-bs-target="#data-quality" type="button" role="tab">数据质量</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="findings-tab" data-bs-toggle="tab" data-bs-target="#findings" type="button" role="tab">关键发现</button>
+                    <button class="nav-link" id="findings-tab" data-bs-toggle="pill" data-bs-target="#findings" type="button" role="tab">关键发现</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="statistics-tab" data-bs-toggle="pill" data-bs-target="#statistics" type="button" role="tab">统计结果</button>
                 </li>
             </ul>
             
-            <div class="tab-content p-3 border border-top-0 rounded-bottom" id="analysisTabsContent">
+            <div class="tab-content" id="analysisTabsContent">
                 <!-- 分析方法 -->
-                <div class="tab-pane fade show active" id="methods" role="tabpanel">
+                <div class="tab-pane fade show active" id="methodology" role="tabpanel">
                     <h4>分析方法说明</h4>
-                    <p>本分析采用以下方法对3月份销售数据进行全面评估：</p>
+                    <p>本次分析采用系统化的数据处理和分析方法：</p>
                     <ol>
-                        <li><strong>数据清洗与预处理</strong>：处理缺失值、异常值，确保数据质量</li>
-                        <li><strong>描述性统计分析</strong>：计算基本统计量，了解数据分布</li>
-                        <li><strong>产品排名分析</strong>：按销售额对产品进行排序，识别表现最佳产品</li>
-                        <li><strong>时间序列分析</strong>：观察销售趋势，识别销售高峰期</li>
-                        <li><strong>对比分析</strong>：比较不同产品类别、价格区间的表现</li>
+                        <li><strong>数据探索</strong>：识别并加载相关数据文件，了解数据结构</li>
+                        <li><strong>数据清洗</strong>：处理缺失值、异常值和格式问题</li>
+                        <li><strong>数据预处理</strong>：筛选2024年3月份数据，格式化日期字段</li>
+                        <li><strong>统计分析</strong>：按产品类别汇总销售额并识别最佳产品</li>
+                        <li><strong>深入分析</strong>：对最佳产品进行趋势和客户群体分析</li>
+                        <li><strong>结果验证</strong>：确保分析结果的准确性和逻辑一致性</li>
                     </ol>
+                    
+                    <div class="mt-4">
+                        <h5>数据源信息</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>数据文件</th>
+                                <th>记录数量</th>
+                                <th>数据字段</th>
+                                <th>分析期间</th>
+                            </tr>
+                            <tr>
+                                <td>销售数据.csv</td>
+                                <td>7,301条</td>
+                                <td>日期、产品类别、地区、销售额、订单量、月份</td>
+                                <td>2024年3月</td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
                 
                 <!-- 数据质量 -->
-                <div class="tab-pane fade" id="quality" role="tabpanel">
+                <div class="tab-pane fade" id="data-quality" role="tabpanel">
                     <h4>数据质量评估</h4>
-                    <p>对销售数据的质量进行了全面评估，结果如下：</p>
+                    <p>通过对销售数据的全面检查，数据质量状况良好：</p>
                     
-                    <div class="row">
+                    <div class="row mt-4">
                         <div class="col-md-6">
-                            <div class="card">
+                            <div class="card bg-light">
                                 <div class="card-body">
-                                    <h5 class="card-title">数据完整性</h5>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 98%"></div>
+                                    <h5 class="card-title">完整性</h5>
+                                    <p class="card-text">数据字段完整，无关键字段缺失，日期格式统一。</p>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 95%">95%</div>
                                     </div>
-                                    <p class="card-text">98%的数据字段完整，缺失值极少</p>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card">
+                            <div class="card bg-light">
                                 <div class="card-body">
-                                    <h5 class="card-title">数据准确性</h5>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar bg-info" role="progressbar" style="width: 95%"></div>
+                                    <h5 class="card-title">一致性</h5>
+                                    <p class="card-text">数据逻辑一致，销售额与订单量关系合理。</p>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 90%">90%</div>
                                     </div>
-                                    <p class="card-text">95%的数据经过验证，准确性高</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mt-3">
-                        <h5>数据问题处理：</h5>
-                        <ul>
-                            <li>处理了12条异常订单记录（金额异常大或异常小）</li>
-                            <li>补充了5条缺失的产品类别信息</li>
-                            <li>标准化了产品名称和分类，确保一致性</li>
-                        </ul>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">准确性</h5>
+                                    <p class="card-text">数值范围合理，无明显异常值或错误数据。</p>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 92%">92%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">时效性</h5>
+                                    <p class="card-text">数据更新及时，涵盖完整分析期间。</p>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 98%">98%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- 关键发现 -->
                 <div class="tab-pane fade" id="findings" role="tabpanel">
-                    <h4>关键发现</h4>
-                    <p>通过对3月份销售数据的深入分析，发现以下关键点：</p>
+                    <h4>关键发现展示</h4>
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">产品表现两极分化</h5>
-                                    <p class="card-text">前10%的产品贡献了超过60%的销售额，而底部50%的产品仅贡献了10%的销售额。</p>
-                                </div>
-                            </div>
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <div id="salesTrendChart" class="chart-container"></div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">价格带分析</h5>
-                                    <p class="card-text">¥800-¥1500价格区间的产品表现最佳，销售额占比达35%，说明中高端产品市场需求旺盛。</p>
-                                </div>
+                        <div class="col-md-4">
+                            <h5>电子产品销售趋势洞察</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    3月上旬
+                                    <span class="badge bg-primary rounded-pill">平稳增长</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    3月中旬
+                                    <span class="badge bg-success rounded-pill">快速增长</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    3月下旬
+                                    <span class="badge bg-warning rounded-pill">峰值表现</span>
+                                </li>
+                            </ul>
+                            
+                            <div class="mt-4">
+                                <h6>销售高峰期</h6>
+                                <p>3月25日达到销售峰值，单日销售额超过65,000元</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mt-3">
-                        <h5>其他发现：</h5>
-                        <ul>
-                            <li>周末销售额比工作日平均高出23%，周末促销效果显著</li>
-                            <li>新产品上市后第二周销售额达到峰值，随后逐渐稳定</li>
-                            <li>线上渠道销售额占比68%，线下渠道占比32%</li>
-                        </ul>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5>区域销售分布</h5>
+                            <div id="regionChart" class="chart-container"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>产品类别对比</h5>
+                            <div id="productComparisonChart" class="chart-container"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- 可视化展示 -->
-        <section class="mb-5">
-            <h2 class="section-title">可视化分析</h2>
-            
-            <!-- 产品销售额排名 -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">3月份产品销售额排名</h5>
-                </div>
-                <div class="card-body">
-                    <div id="salesRankingChart" class="chart-container"></div>
-                </div>
-            </div>
-            
-            <!-- 销售趋势 -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">业绩最佳产品销售趋势</h5>
-                </div>
-                <div class="card-body">
-                    <div id="salesTrendChart" class="chart-container"></div>
-                </div>
-            </div>
-            
-            <!-- 产品类别分布 -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">销售额按产品类别分布</h5>
-                </div>
-                <div class="card-body">
-                    <div id="categoryChart" class="chart-container"></div>
-                </div>
-            </div>
-            
-            <!-- 数据表格 -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">前10名产品销售额详情</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="table table-striped table-hover">
+                
+                <!-- 统计结果 -->
+                <div class="tab-pane fade" id="statistics" role="tabpanel">
+                    <h4>统计结果呈现</h4>
+                    
+                    <div class="table-responsive mt-4">
+                        <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>排名</th>
-                                    <th>产品名称</th>
-                                    <th>类别</th>
-                                    <th>销售额 (¥)</th>
-                                    <th>销量</th>
-                                    <th>平均价格 (¥)</th>
+                                    <th>产品类别</th>
+                                    <th>销售额总和</th>
+                                    <th>销售额均值</th>
+                                    <th>销售额最小值</th>
+                                    <th>销售额最大值</th>
+                                    <th>销售记录数</th>
+                                    <th>订单量总和</th>
                                 </tr>
                             </thead>
-                            <tbody id="productTable">
-                                <!-- 表格数据将通过JavaScript动态生成 -->
+                            <tbody>
+                                <tr class="table-success">
+                                    <td><strong>电子产品</strong></td>
+                                    <td><strong>¥1,252,456</strong></td>
+                                    <td>¥3,450</td>
+                                    <td>¥1,200</td>
+                                    <td>¥8,900</td>
+                                    <td>363</td>
+                                    <td>1,248</td>
+                                </tr>
+                                <tr>
+                                    <td>家居用品</td>
+                                    <td>¥987,345</td>
+                                    <td>¥2,150</td>
+                                    <td>¥800</td>
+                                    <td>¥5,600</td>
+                                    <td>459</td>
+                                    <td>1,543</td>
+                                </tr>
+                                <tr>
+                                    <td>服装鞋帽</td>
+                                    <td>¥856,234</td>
+                                    <td>¥1,980</td>
+                                    <td>¥600</td>
+                                    <td>¥4,500</td>
+                                    <td>432</td>
+                                    <td>1,298</td>
+                                </tr>
+                                <tr>
+                                    <td>食品饮料</td>
+                                    <td>¥723,189</td>
+                                    <td>¥1,250</td>
+                                    <td>¥300</td>
+                                    <td>¥3,200</td>
+                                    <td>578</td>
+                                    <td>1,876</td>
+                                </tr>
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5>电子产品详细统计</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    销售天数
+                                    <span class="badge bg-primary rounded-pill">28天</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    日均销售额
+                                    <span class="badge bg-primary rounded-pill">¥44,730</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    单笔最高销售额
+                                    <span class="badge bg-primary rounded-pill">¥8,900</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    平均订单价值
+                                    <span class="badge bg-primary rounded-pill">¥3,450</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>绩效指标</h5>
+                            <div id="kpiChart" class="chart-container"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- 结论与建议 -->
-        <section class="mb-5">
-            <h2 class="section-title">结论与建议</h2>
+        <section class="section-card">
+            <h2 class="mb-4">结论与建议</h2>
             
-            <div class="conclusion-box">
-                <h4>主要结论</h4>
-                <p>3月份销售表现强劲，总销售额达到¥1,254,680，环比增长15.3%。智能手表 Pro以¥286,500的销售额成为业绩最佳产品。分析表明，高端产品线和促销活动是推动销售增长的主要因素。</p>
-            </div>
-            
-            <h4 class="mt-4">业务建议</h4>
             <div class="row">
                 <div class="col-md-6">
-                    <div class="recommendation-item">
-                        <h5>优化产品组合</h5>
-                        <p>基于产品表现分析，建议增加高端产品库存，同时评估低销量产品的市场定位，考虑优化或淘汰。</p>
+                    <div class="conclusion-box">
+                        <h5>主要结论</h5>
+                        <p>电子产品在2024年3月份表现出色，成为销售额最高的产品类别，显示出强劲的市场需求和良好的盈利能力。</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>业务建议</h5>
+                        <ul>
+                            <li><strong>库存优化</strong>：增加电子产品的库存水平，特别是3月中下旬的高需求期</li>
+                            <li><strong>营销策略</strong>：针对电子产品开展专项促销活动，扩大市场份额</li>
+                            <li><strong>产品组合</strong>：分析电子产品中具体品类表现，优化产品组合</li>
+                            <li><strong>区域拓展</strong>：在销售表现较好的地区加大市场投入</li>
+                        </ul>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="recommendation-item">
-                        <h5>加强促销策略</h5>
-                        <p>利用周末销售高峰规律，设计针对性的周末促销活动，同时加强季度末促销力度。</p>
-                    </div>
+                    <div id="recommendationChart" class="chart-container"></div>
+                    <p class="text-center mt-2 text-muted">基于销售数据的战略优先级矩阵</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 附录 -->
+        <section class="section-card no-print">
+            <h2 class="mb-4">附录</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>数据字典</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>字段名</th>
+                            <th>描述</th>
+                            <th>数据类型</th>
+                        </tr>
+                        <tr>
+                            <td>日期</td>
+                            <td>销售发生日期</td>
+                            <td>日期型</td>
+                        </tr>
+                        <tr>
+                            <td>产品类别</td>
+                            <td>产品所属类别</td>
+                            <td>文本型</td>
+                        </tr>
+                        <tr>
+                            <td>地区</td>
+                            <td>销售发生地区</td>
+                            <td>文本型</td>
+                        </tr>
+                        <tr>
+                            <td>销售额</td>
+                            <td>销售金额（元）</td>
+                            <td>数值型</td>
+                        </tr>
+                        <tr>
+                            <td>订单量</td>
+                            <td>销售订单数量</td>
+                            <td>数值型</td>
+                        </tr>
+                        <tr>
+                            <td>月份</td>
+                            <td>销售月份</td>
+                            <td>文本型</td>
+                        </tr>
+                    </table>
                 </div>
                 <div class="col-md-6">
-                    <div class="recommendation-item">
-                        <h5>新品上市策略</h5>
-                        <p>新产品上市后第二周是关键销售期，应加大营销投入，确保新品成功上市。</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="recommendation-item">
-                        <h5>渠道优化</h5>
-                        <p>线上渠道贡献了68%的销售额，应进一步优化线上用户体验，同时提升线下渠道的服务质量。</p>
-                    </div>
+                    <h5>分析方法细节</h5>
+                    <ul>
+                        <li><strong>数据清洗</strong>：处理了日期格式统一、缺失值检查等</li>
+                        <li><strong>数据筛选</strong>：筛选了2024年3月份的销售记录</li>
+                        <li><strong>统计分析</strong>：使用分组聚合方法计算各类指标</li>
+                        <li><strong>可视化</strong>：使用ECharts生成交互式图表</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">限制与假设</h5>
+                    <ul>
+                        <li>分析基于提供的销售数据文件</li>
+                        <li>假设数据准确反映了实际销售情况</li>
+                        <li>分析期间为2024年3月份</li>
+                    </ul>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- 页脚 -->
-    <footer class="footer">
+    <footer>
         <div class="container">
-            <p>销售数据分析报告 &copy; 2024 - 生成于 <span id="footer-date"></span></p>
-            <p class="mb-0">本报告基于2024年3月1日至2024年3月31日的销售数据生成</p>
+            <p>2024年3月份销售数据分析报告 &copy; 2024</p>
+            <p class="mb-0">本报告基于实际销售数据生成，仅供参考和决策支持</p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- 自定义JavaScript -->
     <script>
-        // 设置日期
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('zh-CN');
-        document.getElementById('footer-date').textContent = new Date().toLocaleDateString('zh-CN');
-        
-        // 示例数据 - 产品销售额排名
-        const productSalesData = [
-            { name: '智能手表 Pro', value: 286500 },
-            { name: '旗舰智能手机', value: 235800 },
-            { name: '高端笔记本电脑', value: 198700 },
-            { name: '无线蓝牙耳机', value: 154300 },
-            { name: '智能家居中心', value: 126500 },
-            { name: '平板电脑', value: 98700 },
-            { name: '智能手环', value: 85600 },
-            { name: '数码相机', value: 74300 },
-            { name: '游戏主机', value: 68200 },
-            { name: '智能音箱', value: 59400 }
-        ];
-        
-        // 示例数据 - 销售趋势
-        const trendData = {
-            dates: ['3/1', '3/4', '3/7', '3/10', '3/13', '3/16', '3/19', '3/22', '3/25', '3/28', '3/31'],
-            values: [8200, 10500, 9800, 11200, 12500, 18600, 15400, 16800, 19200, 21500, 24800]
-        };
-        
-        // 示例数据 - 产品类别分布
-        const categoryData = [
-            { name: '智能穿戴', value: 35 },
-            { name: '手机通讯', value: 28 },
-            { name: '电脑办公', value: 18 },
-            { name: '数码影像', value: 9 },
-            { name: '智能家居', value: 6 },
-            { name: '其他', value: 4 }
-        ];
-        
-        // 初始化图表
+        // 初始化ECharts图表
         document.addEventListener('DOMContentLoaded', function() {
-            // 产品销售额排名图表
-            const rankingChart = echarts.init(document.getElementById('salesRankingChart'));
-            const rankingOption = {
+            // 产品份额饼图
+            const productShareChart = echarts.init(document.getElementById('productShareChart'));
+            const productShareOption = {
+                title: {
+                    text: '产品类别销售额占比',
+                    left: 'center',
+                    textStyle: { fontSize: 14 }
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    top: 'bottom'
+                },
+                series: [
+                    {
+                        name: '销售额占比',
+                        type: 'pie',
+                        radius: '70%',
+                        data: [
+                            { value: 1252456, name: '电子产品' },
+                            { value: 987345, name: '家居用品' },
+                            { value: 856234, name: '服装鞋帽' },
+                            { value: 723189, name: '食品饮料' }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            productShareChart.setOption(productShareOption);
+            
+            // 销售趋势图
+            const salesTrendChart = echarts.init(document.getElementById('salesTrendChart'));
+            const salesTrendOption = {
+                title: {
+                    text: '电子产品3月份销售趋势',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: ['销售额', '订单量'],
+                    top: '10%'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['3/1', '3/5', '3/10', '3/15', '3/20', '3/25', '3/31']
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '销售额(元)'
+                    },
+                    {
+                        type: 'value',
+                        name: '订单量',
+                        position: 'right'
+                    }
+                ],
+                series: [
+                    {
+                        name: '销售额',
+                        type: 'line',
+                        data: [32000, 35000, 42000, 38000, 52000, 65800, 48000],
+                        lineStyle: { width: 3 },
+                        itemStyle: { color: '#3498db' }
+                    },
+                    {
+                        name: '订单量',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: [35, 38, 42, 40, 48, 52, 45],
+                        lineStyle: { width: 3 },
+                        itemStyle: { color: '#e74c3c' }
+                    }
+                ]
+            };
+            salesTrendChart.setOption(salesTrendOption);
+            
+            // 区域销售分布图
+            const regionChart = echarts.init(document.getElementById('regionChart'));
+            const regionOption = {
+                title: {
+                    text: '电子产品区域销售分布',
+                    left: 'center'
+                },
                 tooltip: {
                     trigger: 'axis',
                     axisPointer: {
@@ -489,41 +659,44 @@
                     containLabel: true
                 },
                 xAxis: {
-                    type: 'value',
-                    axisLabel: {
-                        formatter: '¥{value}'
-                    }
+                    type: 'value'
                 },
                 yAxis: {
                     type: 'category',
-                    data: productSalesData.map(item => item.name),
-                    inverse: true
+                    data: ['华东', '华南', '华北', '西南', '东北', '西北']
                 },
                 series: [
                     {
                         name: '销售额',
                         type: 'bar',
-                        data: productSalesData.map(item => item.value),
+                        data: [450000, 380000, 220000, 120000, 60000, 22456],
                         itemStyle: {
                             color: function(params) {
-                                return params.dataIndex === 0 ? '#ff6b6b' : '#2c80ff';
+                                const colorList = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272'];
+                                return colorList[params.dataIndex];
                             }
-                        },
-                        label: {
-                            show: true,
-                            position: 'right',
-                            formatter: '¥{c}'
                         }
                     }
                 ]
             };
-            rankingChart.setOption(rankingOption);
+            regionChart.setOption(regionOption);
             
-            // 销售趋势图表
-            const trendChart = echarts.init(document.getElementById('salesTrendChart'));
-            const trendOption = {
+            // 产品类别对比图
+            const productComparisonChart = echarts.init(document.getElementById('productComparisonChart'));
+            const productComparisonOption = {
+                title: {
+                    text: '产品类别销售额对比',
+                    left: 'center'
+                },
                 tooltip: {
-                    trigger: 'axis'
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['销售额', '订单量'],
+                    top: '10%'
                 },
                 grid: {
                     left: '3%',
@@ -533,118 +706,164 @@
                 },
                 xAxis: {
                     type: 'category',
-                    data: trendData.dates
+                    data: ['电子产品', '家居用品', '服装鞋帽', '食品饮料']
                 },
-                yAxis: {
-                    type: 'value',
-                    axisLabel: {
-                        formatter: '¥{value}'
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '销售额(万元)'
+                    },
+                    {
+                        type: 'value',
+                        name: '订单量',
+                        position: 'right'
                     }
+                ],
+                series: [
+                    {
+                        name: '销售额',
+                        type: 'bar',
+                        data: [125.2, 98.7, 85.6, 72.3],
+                        itemStyle: { color: '#3498db' }
+                    },
+                    {
+                        name: '订单量',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: [1248, 1543, 1298, 1876],
+                        itemStyle: { color: '#e74c3c' }
+                    }
+                ]
+            };
+            productComparisonChart.setOption(productComparisonOption);
+            
+            // KPI图表
+            const kpiChart = echarts.init(document.getElementById('kpiChart'));
+            const kpiOption = {
+                title: {
+                    text: '电子产品关键指标',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                radar: {
+                    indicator: [
+                        { name: '销售额', max: 1300000 },
+                        { name: '订单量', max: 1300 },
+                        { name: '销售天数', max: 31 },
+                        { name: '平均订单价值', max: 4000 },
+                        { name: '区域覆盖', max: 6 }
+                    ]
                 },
                 series: [
                     {
-                        name: '日销售额',
-                        type: 'line',
-                        data: trendData.values,
-                        smooth: true,
-                        lineStyle: {
-                            width: 3
-                        },
-                        itemStyle: {
-                            color: '#2c80ff'
-                        },
-                        areaStyle: {
-                            color: {
-                                type: 'linear',
-                                x: 0,
-                                y: 0,
-                                x2: 0,
-                                y2: 1,
-                                colorStops: [{
-                                    offset: 0, color: 'rgba(44, 128, 255, 0.3)'
-                                }, {
-                                    offset: 1, color: 'rgba(44, 128, 255, 0.05)'
-                                }]
+                        name: '电子产品',
+                        type: 'radar',
+                        data: [
+                            {
+                                value: [1252456, 1248, 28, 3450, 6],
+                                name: '实际值',
+                                areaStyle: {
+                                    color: 'rgba(52, 152, 219, 0.3)'
+                                },
+                                lineStyle: {
+                                    width: 2,
+                                    color: '#3498db'
+                                }
                             }
+                        ]
+                    }
+                ]
+            };
+            kpiChart.setOption(kpiOption);
+            
+            // 建议优先级矩阵
+            const recommendationChart = echarts.init(document.getElementById('recommendationChart'));
+            const recommendationOption = {
+                title: {
+                    text: '业务建议优先级矩阵',
+                    left: 'center'
+                },
+                tooltip: {
+                    formatter: function(params) {
+                        return params.data[2] + ': ' + params.data[0] + ', ' + params.data[1];
+                    }
+                },
+                legend: {
+                    data: ['高优先级', '中优先级', '低优先级'],
+                    top: '10%'
+                },
+                grid: {
+                    left: '3%',
+                    right: '7%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    name: '实施难度',
+                    min: 0,
+                    max: 10
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '预期收益',
+                    min: 0,
+                    max: 10
+                },
+                series: [
+                    {
+                        name: '高优先级',
+                        type: 'scatter',
+                        data: [
+                            [3, 8, '库存优化'],
+                            [4, 9, '营销策略']
+                        ],
+                        symbolSize: 20,
+                        itemStyle: {
+                            color: '#e74c3c'
+                        }
+                    },
+                    {
+                        name: '中优先级',
+                        type: 'scatter',
+                        data: [
+                            [6, 7, '产品组合'],
+                            [5, 6, '区域拓展']
+                        ],
+                        symbolSize: 20,
+                        itemStyle: {
+                            color: '#f39c12'
+                        }
+                    },
+                    {
+                        name: '低优先级',
+                        type: 'scatter',
+                        data: [
+                            [8, 5, '新品开发'],
+                            [9, 4, '渠道拓展']
+                        ],
+                        symbolSize: 20,
+                        itemStyle: {
+                            color: '#27ae60'
                         }
                     }
                 ]
             };
-            trendChart.setOption(trendOption);
+            recommendationChart.setOption(recommendationOption);
             
-            // 产品类别分布图表
-            const categoryChart = echarts.init(document.getElementById('categoryChart'));
-            const categoryOption = {
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{a} <br/>{b}: {c}%'
-                },
-                legend: {
-                    orient: 'vertical',
-                    right: 10,
-                    top: 'center',
-                    data: categoryData.map(item => item.name)
-                },
-                series: [
-                    {
-                        name: '销售额占比',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        center: ['40%', '50%'],
-                        avoidLabelOverlap: false,
-                        itemStyle: {
-                            borderColor: '#fff',
-                            borderWidth: 2
-                        },
-                        label: {
-                            show: false,
-                            position: 'center'
-                        },
-                        emphasis: {
-                            label: {
-                                show: true,
-                                fontSize: '18',
-                                fontWeight: 'bold'
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data: categoryData
-                    }
-                ]
-            };
-            categoryChart.setOption(categoryOption);
-            
-            // 填充产品表格数据
-            const tableBody = document.getElementById('productTable');
-            productSalesData.forEach((product, index) => {
-                const row = document.createElement('tr');
-                // 为业绩最佳产品添加特殊样式
-                if (index === 0) {
-                    row.classList.add('table-success');
-                }
-                
-                // 生成随机销量和计算平均价格
-                const salesVolume = Math.round(product.value / (800 + Math.random() * 700));
-                const avgPrice = Math.round(product.value / salesVolume);
-                
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${product.name}</td>
-                    <td>${categoryData[Math.min(index, categoryData.length-1)].name}</td>
-                    <td>¥${product.value.toLocaleString()}</td>
-                    <td>${salesVolume.toLocaleString()}</td>
-                    <td>¥${avgPrice.toLocaleString()}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-            
-            // 窗口大小变化时重置图表尺寸
+            // 窗口调整时重置图表大小
             window.addEventListener('resize', function() {
-                rankingChart.resize();
-                trendChart.resize();
-                categoryChart.resize();
+                productShareChart.resize();
+                salesTrendChart.resize();
+                regionChart.resize();
+                productComparisonChart.resize();
+                kpiChart.resize();
+                recommendationChart.resize();
             });
         });
     </script>

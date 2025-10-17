@@ -163,7 +163,7 @@ class CollaborationManager:
                 "sender": msg.sender.value,
                 "receiver": msg.receiver.value,
                 "type": msg.message_type,
-                "content": msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+                "content": str(msg.content)[:200] + "..." if len(str(msg.content)) > 200 else str(msg.content)
             }
             for msg in self.conversation_log
         ]
@@ -280,7 +280,7 @@ class EnhancedMultiAgentSystem:
             # 通知团队开始新项目
             await self.collaboration_protocol.notify_completion(
                 AgentRole.MANAGER,
-                [AgentRole.ANALYST, AgentRole.VISUALIZER, AgentRole.REPORTER, AgentRole.QA],
+                [AgentRole.ANALYST, AgentRole.REPORTER, AgentRole.QA],
                 "项目启动",
                 f"新项目开始：{user_query}"
             )
@@ -303,7 +303,7 @@ class EnhancedMultiAgentSystem:
             # 通知项目完成
             await self.collaboration_protocol.notify_completion(
                 AgentRole.MANAGER,
-                [AgentRole.ANALYST, AgentRole.VISUALIZER, AgentRole.REPORTER, AgentRole.QA],
+                [AgentRole.ANALYST, AgentRole.REPORTER, AgentRole.QA],
                 "项目完成",
                 "所有分析任务已完成，报告已生成"
             )
@@ -333,7 +333,7 @@ class EnhancedMultiAgentSystem:
 
             if result.status == "completed":
                 # 请求其他智能体的反馈
-                if task.agent_role in [AgentRole.ANALYST, AgentRole.VISUALIZER]:
+                if task.agent_role in [AgentRole.ANALYST]:
                     await self.collaboration_protocol.request_feedback(
                         task.agent_role,
                         AgentRole.QA,
@@ -367,22 +367,42 @@ class EnhancedMultiAgentSystem:
         """生成增强的报告"""
         reporter = self.base_system.agents[AgentRole.REPORTER]
 
-        # 收集所有分析结果
+        # 收集完整的分析结果和结构化总结
         analysis_results = []
+        structured_summaries = []
+        
         for task in completed_tasks:
             if task.status == "completed":
-                analysis_results.append({
-                    "task": task.description,
-                    "result": task.result
-                })
+                analysis_result = {
+                    "task_id": task.id,
+                    "description": task.description,
+                    "result": task.result,  # 保留完整结果
+                    "agent_role": task.agent_role.value,
+                    "completion_time": task.completed_at if hasattr(task, 'completed_at') else None
+                }
+                
+                # 如果有结构化总结，添加到结果中
+                if hasattr(task, 'structured_summary') and task.structured_summary:
+                    analysis_result["structured_summary"] = task.structured_summary
+                    structured_summaries.append({
+                        "task_id": task.id,
+                        "description": task.description,
+                        "summary": task.structured_summary
+                    })
+                
+                analysis_results.append(analysis_result)
+
+        # 使用结构化总结构建任务描述
+        enhanced_description = self._build_collaboration_description(analysis_results, structured_summaries)
 
         # 创建报告生成任务
         report_task = type('Task', (), {
             'id': "enhanced_report",
-            'description': "生成协作增强的HTML分析报告",
+            'description': enhanced_description,
             'agent_role': AgentRole.REPORTER,
             'result': None,
-            'status': 'pending'
+            'status': 'pending',
+            'analysis_results': analysis_results  # 传递完整分析结果
         })()
 
         # 处理报告生成
@@ -392,6 +412,97 @@ class EnhancedMultiAgentSystem:
             return result.result
         else:
             return f"报告生成失败: {result.error}"
+
+    def _summarize_analysis_result(self, result: str) -> str:
+        """智能摘要分析结果，保留关键信息"""
+        if len(result) <= 500:
+            return result
+        
+        # 提取关键信息：数字、百分比、重要结论等
+        import re
+        
+        # 安全处理结果，确保是字符串
+        result_str = str(result)
+        
+        # 提取数字和关键指标
+        numbers = re.findall(r'\d+(?:\.\d+)?%?', result_str[:1000])
+        
+        # 提取结论性语句
+        conclusions = []
+        conclusion_patterns = [
+            r'结论[：:](.*?)(?:\.|$)',
+            r'发现[：:](.*?)(?:\.|$)', 
+            r'建议[：:](.*?)(?:\.|$)',
+            r'因此[，,](.*?)(?:\.|$)'
+        ]
+        
+        for pattern in conclusion_patterns:
+            matches = re.findall(pattern, result_str[:1000])
+            conclusions.extend(matches)
+        
+        # 构建智能摘要
+        summary_parts = []
+        
+        if numbers:
+            summary_parts.append(f"关键数值: {'、'.join(numbers[:5])}")
+        
+        if conclusions:
+            summary_parts.append(f"主要发现: {'; '.join(conclusions[:3])}")
+        
+        if not summary_parts:
+            # 如果无法提取关键信息，使用前300字符
+            return result_str[:300] + "..." if len(result_str) > 300 else result_str
+        
+        return "; ".join(summary_parts)
+
+    def _build_collaboration_description(self, analysis_results: List[Dict], structured_summaries: List[Dict]) -> str:
+        """基于结构化总结构建协作报告描述"""
+        description = f"""生成协作增强的HTML分析报告
+
+## 协作分析任务概览
+已完成 {len(analysis_results)} 个协作分析任务
+
+## 结构化协作总结概览"""
+
+        if structured_summaries:
+            description += f"\n已完成 {len(structured_summaries)} 个协作任务的结构化总结：\n"
+            
+            for summary in structured_summaries:
+                desc = summary['description']
+                structured = summary['summary']
+                
+                if isinstance(structured, dict):
+                    description += f"\n### {desc}\n"
+                    
+                    if 'key_findings' in structured and structured['key_findings']:
+                        description += f"**协作发现:**\n"
+                        for finding in structured['key_findings'][:3]:
+                            description += f"- {finding}\n"
+                    
+                    if 'business_implications' in structured and structured['business_implications']:
+                        description += f"**业务影响:**\n"
+                        for implication in structured['business_implications'][:2]:
+                            description += f"- {implication}\n"
+                    
+                    if 'summary' in structured and structured['summary']:
+                        description += f"**协作总结:** {structured['summary']}\n"
+                else:
+                    description += f"\n### {desc}\n{str(structured)[:200]}...\n"
+        else:
+            description += "\n暂无协作结构化总结数据，将使用原始分析结果。\n"
+
+        description += """
+
+## 完整协作分析数据
+所有协作分析任务的完整结果已收集，请基于结构化总结生成专业的HTML报告。
+
+请确保报告包含：
+1. 基于结构化总结的协作关键发现
+2. 多智能体协作的成果展示
+3. 数据洞察和业务建议
+4. 协作过程的亮点总结"""
+
+        return description
 
     def get_collaboration_stats(self) -> Dict[str, Any]:
         """获取协作统计信息"""

@@ -22,7 +22,6 @@ class AgentRole(Enum):
     """智能体角色枚举"""
     MANAGER = "manager"  # 项目经理：任务分解和协调
     ANALYST = "analyst"  # 数据分析师：数据处理和分析
-    VISUALIZER = "visualizer"  # 可视化专家：图表和可视化
     REPORTER = "reporter"  # 报告生成器：HTML报告整合
     QA = "qa"  # 质量保证：结果验证
 
@@ -39,6 +38,8 @@ class Task:
     error: Optional[str] = None
     created_at: float = field(default_factory=time.time)
     completed_at: Optional[float] = None
+    analysis_results: Optional[List[Dict[str, Any]]] = None  # 用于存储完整的分析结果
+    structured_summary: Optional[Dict[str, Any]] = None  # 结构化总结
 
 
 @dataclass
@@ -85,8 +86,15 @@ class BaseAgent(ABC):
             task.status = "in_progress"
             self.active_tasks[task.id] = task
 
-            # 添加任务描述到消息历史
+            # 构建任务提示，包含analysis_results（如果存在）
             task_prompt = f"任务：{task.description}"
+            
+            # 如果有完整的分析结果，添加到提示中
+            if hasattr(task, 'analysis_results') and task.analysis_results:
+                analysis_info = f"\n\n## 完整分析数据\n系统提供了 {len(task.analysis_results)} 个分析任务的完整结果。"
+                analysis_info += f"每个结果都包含完整的分析内容，请基于这些详细数据生成报告。"
+                task_prompt += analysis_info
+
             self.messages.append({
                 "role": "user",
                 "content": task_prompt
@@ -99,7 +107,7 @@ class BaseAgent(ABC):
                 messages=self.messages,
                 tools=self.tool_manager.get_tool_schemas()
             )
-
+            logger.info(f"[{self.role.value}] 完成了{task.description}: {response}")
             if response.get("status") == "error":
                 logger.error(f"[{self.role.value}] 模型响应错误: {response.get('error')}")
                 task.status = "failed"
@@ -111,6 +119,7 @@ class BaseAgent(ABC):
                 logger.info(f"[{self.role.value}] 收到模型响应: {message.get('content', '')[:200]}...")
 
                 # 处理工具调用
+                tool_execution_results = []  # 存储工具执行的实际结果
                 if message.get("tool_calls"):
                     logger.info(f"[{self.role.value}] 检测到工具调用: {len(message['tool_calls'])} 个")
 
@@ -129,6 +138,15 @@ class BaseAgent(ABC):
                         )
                         logger.info(f"[{self.role.value}] 工具 {tool_name} 执行结果: 成功={result.success}")
 
+                        # 保存工具执行的实际数据结果
+                        if result.success and result.data:
+                            tool_execution_results.append({
+                                "tool_name": tool_name,
+                                "arguments": args,
+                                "execution_result": result.data,
+                                "execution_time": result.execution_time
+                            })
+
                         # 添加工具结果
                         self.messages.append({
                             "role": "tool",
@@ -136,9 +154,26 @@ class BaseAgent(ABC):
                             "tool_call_id": tool_call["id"]
                         })
 
-                task.result = message.get("content", "")
+                # 构建包含实际数据的结果
+                final_result = {
+                    "model_response": message.get("content", ""),
+                    "tool_execution_results": tool_execution_results,
+                    "has_data_results": len(tool_execution_results) > 0
+                }
+
+                task.result = final_result
                 task.status = "completed"
                 task.completed_at = time.time()
+
+                # 对任务结果进行结构化总结
+                if task.agent_role in [AgentRole.ANALYST, AgentRole.QA]:
+                    try:
+                        structured_summary = await self._create_structured_summary(task)
+                        task.structured_summary = structured_summary
+                        logger.info(f"[{self.role.value}] 任务结构化总结完成")
+                    except Exception as e:
+                        logger.warning(f"[{self.role.value}] 结构化总结失败: {e}")
+                        task.structured_summary = {"error": str(e)}
 
                 logger.info(f"[{self.role.value}] 任务完成: {task.description}")
 
@@ -150,6 +185,53 @@ class BaseAgent(ABC):
             task.error = str(e)
             return task
 
+    async def _create_structured_summary(self, task: Task) -> Dict[str, Any]:
+        """使用模型对任务结果进行结构化总结"""
+        summary_prompt = f"""请对以下分析任务的结果进行结构化总结：
+
+任务描述: {task.description}
+任务结果: {task.result}
+
+请按照以下JSON格式返回总结：
+{{
+  "key_findings": ["发现1", "发现2", "发现3"],
+  "data_insights": ["数据洞察1", "数据洞察2"],
+  "business_implications": ["业务影响1", "业务影响2"],
+  "recommendations": ["建议1", "建议2", "建议3"],
+  "technical_details": ["技术细节1", "技术细节2"],
+  "summary": "总体总结"
+}}
+
+请确保总结准确、完整，并基于实际分析结果。"""
+
+        # 创建临时消息列表进行总结
+        summary_messages = [
+            {"role": "system", "content": "你是一个专业的数据分析总结专家，擅长从分析结果中提取关键信息并进行结构化总结。"},
+            {"role": "user", "content": summary_prompt}
+        ]
+
+        response = await self.model_client.chat_completion(
+            messages=summary_messages,
+            tools=[]  # 总结不需要工具调用
+        )
+
+        if response.get("status") == "error":
+            raise RuntimeError(f"总结生成失败: {response.get('error')}")
+
+        content = response["message"]["content"]
+        
+        # 提取JSON格式的总结
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except json.JSONDecodeError:
+                pass
+        
+        # 如果无法解析JSON，返回原始内容
+        return {"raw_summary": content}
+
 
 class ManagerAgent(BaseAgent):
     """项目经理智能体"""
@@ -160,7 +242,7 @@ class ManagerAgent(BaseAgent):
 你的职责：
 1. 理解用户的业务需求和目标
 2. 将复杂任务分解为可执行的子任务
-3. 分配任务给合适的团队成员（数据分析师、可视化专家、报告生成器）
+3. 分配任务给合适的团队成员（数据分析师、报告生成器、质量保证员）
 4. 监控项目进度并协调团队协作
 5. 确保最终交付物符合用户期望
 
@@ -173,7 +255,6 @@ class ManagerAgent(BaseAgent):
 
 协作指南：
 - 与数据分析师合作：明确分析目标和数据要求
-- 与可视化专家合作：确保图表清晰传达关键信息
 - 与报告生成器合作：整合所有成果为专业报告
 - 定期与质量保证团队沟通验证结果
 
@@ -190,12 +271,11 @@ class ManagerAgent(BaseAgent):
 1. 数据探索和理解
 2. 数据清洗和预处理
 3. 统计分析和建模
-4. 可视化展示
-5. 报告生成
+4. 报告生成
 
 请以JSON格式返回任务列表，每个任务包含：
 - description: 任务描述
-- agent_role: 负责的智能体角色 (analyst, visualizer, reporter, qa)
+- agent_role: 负责的智能体角色 (analyst, reporter, qa)
 - dependencies: 依赖的前置任务ID列表
 
 示例格式：
@@ -251,7 +331,7 @@ class ManagerAgent(BaseAgent):
 
         except Exception as e:
             logger.error(f"[manager] 解析任务列表失败: {e}")
-            # 返回默认任务列表
+            # 返回默认任务列表（移除可视化任务）
             default_tasks = [
                 Task(
                     id="task_1",
@@ -260,15 +340,9 @@ class ManagerAgent(BaseAgent):
                 ),
                 Task(
                     id="task_2",
-                    description="生成可视化图表",
-                    agent_role=AgentRole.VISUALIZER,
-                    dependencies=["task_1"]
-                ),
-                Task(
-                    id="task_3",
                     description="生成分析报告",
                     agent_role=AgentRole.REPORTER,
-                    dependencies=["task_1", "task_2"]
+                    dependencies=["task_1"]
                 )
             ]
             logger.info(f"[manager] 使用默认任务列表: {len(default_tasks)} 个任务")
@@ -293,6 +367,7 @@ class AnalystAgent(BaseAgent):
 - 自动化处理：使用最佳实践处理常见数据问题
 - 结果验证：通过多种方法验证分析结果的可靠性
 - 文档化：清晰记录每个分析步骤和发现
+- 无需可视化展示：不要进行matplotlib可视化展示，专注于数据的处理和分析
 
 工具使用指南：
 - read_directory：了解可用数据文件
@@ -301,34 +376,6 @@ class AnalystAgent(BaseAgent):
 - install_package：安装必要的分析库
 
 请专注于提供准确、可复现的数据分析结果。"""
-
-
-class VisualizerAgent(BaseAgent):
-    """可视化专家智能体"""
-
-    def _get_system_prompt(self) -> str:
-        return """你是一个专业的可视化专家智能体，专注于数据可视化。
-
-你的专长：
-1. 图表选择：根据数据类型选择最合适的可视化方式
-2. 交互式图表：创建支持缩放、筛选的交互式图表
-3. 仪表板设计：整合多个图表为统一的仪表板
-4. 美学设计：确保图表美观、易读、专业
-5. 故事叙述：通过可视化讲述数据背后的故事
-
-可视化原则：
-- 清晰性：图表必须清晰传达关键信息
-- 一致性：保持风格和色彩的一致性
-- 交互性：提供必要的交互功能增强用户体验
-- 响应式：确保在不同设备上都有良好显示效果
-
-技术栈：
-- 主要使用ECharts进行交互式可视化
-- 支持Matplotlib/Seaborn静态图表
-- HTML/CSS/JavaScript前端技术
-- 响应式设计确保移动端兼容
-
-请创造信息丰富且美观的可视化作品。"""
 
 
 class ReporterAgent(BaseAgent):
@@ -386,7 +433,7 @@ class QAAgent(BaseAgent):
 - 边界测试：验证边界条件下的结果
 - 合理性检查：基于领域知识评估结果合理性
 
-请确保最终交付物的高质量和可靠性。"""
+注意：不要进行matplotlib可视化展示，只验证分析结果的质量，请确保最终交付物的高质量和可靠性。"""
 
 
 class MultiAgentSystem:
@@ -409,9 +456,6 @@ class MultiAgentSystem:
             ),
             AgentRole.ANALYST: AnalystAgent(
                 AgentRole.ANALYST, model_client, tool_manager, conversation_id
-            ),
-            AgentRole.VISUALIZER: VisualizerAgent(
-                AgentRole.VISUALIZER, model_client, tool_manager, conversation_id
             ),
             AgentRole.REPORTER: ReporterAgent(
                 AgentRole.REPORTER, model_client, tool_manager, conversation_id
@@ -491,6 +535,8 @@ class MultiAgentSystem:
 
             results = await asyncio.gather(*execution_tasks, return_exceptions=True)
 
+            # 并行进行结构化总结
+            summary_tasks = []
             for result in results:
                 if isinstance(result, Exception):
                     logger.error(f"任务执行异常: {result}")
@@ -498,6 +544,16 @@ class MultiAgentSystem:
                     completed_tasks.append(result)
                     self.tasks[result.id] = result
                     logger.info(f"任务 {result.id} 完成 - 状态: {result.status}")
+                    
+                    # 如果需要总结且任务成功完成，并行进行结构化总结
+                    if (result.status == "completed" and 
+                        result.agent_role in [AgentRole.ANALYST, AgentRole.QA] and
+                        hasattr(result, 'structured_summary') and result.structured_summary is None):
+                        summary_tasks.append(self._create_structured_summary_parallel(result))
+            
+            # 并行执行总结任务
+            if summary_tasks:
+                await asyncio.gather(*summary_tasks, return_exceptions=True)
 
             round_num += 1
 
@@ -509,18 +565,43 @@ class MultiAgentSystem:
         """生成最终HTML报告"""
         reporter = self.agents[AgentRole.REPORTER]
 
-        # 构建报告生成提示
-        task_summaries = []
+        # 收集完整的分析结果和结构化总结
+        analysis_results = []
+        structured_summaries = []
+        
         for task in completed_tasks:
             if task.status == "completed":
-                task_summaries.append(f"- {task.description}: {task.result[:200]}...")
+                analysis_result = {
+                    "task_id": task.id,
+                    "description": task.description,
+                    "result": task.result,  # 保留完整结果
+                    "agent_role": task.agent_role.value,
+                    "completion_time": task.completed_at
+                }
+                
+                # 如果有结构化总结，添加到结果中
+                if hasattr(task, 'structured_summary') and task.structured_summary:
+                    analysis_result["structured_summary"] = task.structured_summary
+                    structured_summaries.append({
+                        "task_id": task.id,
+                        "description": task.description,
+                        "summary": task.structured_summary
+                    })
+                
+                analysis_results.append(analysis_result)
 
-        # 创建报告生成任务
+        # 使用结构化总结构建任务描述
+        enhanced_description = self._build_report_description(analysis_results, structured_summaries)
+
+        # 创建报告生成任务，并传递完整分析结果
         report_task = Task(
             id="final_report",
-            description="生成最终HTML分析报告",
+            description=enhanced_description,
             agent_role=AgentRole.REPORTER
         )
+
+        # 将完整分析结果存储在任务中供报告生成器使用
+        report_task.analysis_results = analysis_results
 
         # 处理报告生成任务
         result = await reporter.process_task(report_task)
@@ -529,6 +610,111 @@ class MultiAgentSystem:
             return result.result
         else:
             return f"报告生成失败: {result.error}"
+
+    # 结构化总结已移至BaseAgent类中，使用模型进行智能总结
+
+    async def _create_structured_summary(self, task: Task) -> Dict[str, Any]:
+        """使用模型对任务结果进行结构化总结"""
+        summary_prompt = f"""请对以下分析任务的结果进行结构化总结：
+
+任务描述: {task.description}
+任务结果: {task.result}
+
+请按照以下JSON格式返回总结：
+{{
+  "key_findings": ["发现1", "发现2", "发现3"],
+  "data_insights": ["数据洞察1", "数据洞察2"],
+  "business_implications": ["业务影响1", "业务影响2"],
+  "recommendations": ["建议1", "建议2", "建议3"],
+  "technical_details": ["技术细节1", "技术细节2"],
+  "summary": "总体总结"
+}}
+
+请确保总结准确、完整，并基于实际分析结果。"""
+
+        # 创建临时消息列表进行总结
+        summary_messages = [
+            {"role": "system", "content": "你是一个专业的数据分析总结专家，擅长从分析结果中提取关键信息并进行结构化总结。"},
+            {"role": "user", "content": summary_prompt}
+        ]
+
+        response = await self.model_client.chat_completion(
+            messages=summary_messages,
+            tools=[]  # 总结不需要工具调用
+        )
+
+        if response.get("status") == "error":
+            raise RuntimeError(f"总结生成失败: {response.get('error')}")
+
+        content = response["message"]["content"]
+        
+        # 提取JSON格式的总结
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except json.JSONDecodeError:
+                pass
+        
+        # 如果无法解析JSON，返回原始内容
+        return {"raw_summary": content}
+
+    async def _create_structured_summary_parallel(self, task: Task):
+        """并行执行结构化总结"""
+        try:
+            agent = self.agents[task.agent_role]
+            if hasattr(agent, '_create_structured_summary'):
+                structured_summary = await agent._create_structured_summary(task)
+                task.structured_summary = structured_summary
+                logger.info(f"并行总结完成: {task.id}")
+        except Exception as e:
+            logger.warning(f"并行总结失败 {task.id}: {e}")
+            task.structured_summary = {"error": str(e)}
+
+    def _build_report_description(self, analysis_results: List[Dict], structured_summaries: List[Dict]) -> str:
+        """基于结构化总结构建报告描述"""
+        description = f"""生成最终HTML分析报告
+
+## 分析任务概览
+已完成 {len(analysis_results)} 个分析任务
+
+## 结构化总结概览"""
+
+        if structured_summaries:
+            description += f"\n已完成 {len(structured_summaries)} 个任务的结构化总结：\n"
+            
+            for summary in structured_summaries:
+                desc = summary['description']
+                structured = summary['summary']
+                
+                if isinstance(structured, dict):
+                    description += f"\n### {desc}\n"
+                    
+                    if 'key_findings' in structured and structured['key_findings']:
+                        description += f"**关键发现:**\n"
+                        for finding in structured['key_findings'][:3]:  # 限制显示数量
+                            description += f"- {finding}\n"
+                    
+                    if 'summary' in structured and structured['summary']:
+                        description += f"**总体总结:** {structured['summary']}\n"
+                else:
+                    description += f"\n### {desc}\n{str(structured)[:200]}...\n"
+        else:
+            description += "\n暂无结构化总结数据，将使用原始分析结果。\n"
+
+        description += """
+
+## 完整分析数据
+所有分析任务的完整结果已收集，请基于结构化总结和原始数据生成专业的HTML报告。
+
+请确保报告包含：
+1. 基于结构化总结的关键发现和洞察
+2. 数据分析的可视化展示
+3. 业务建议和行动计划
+4. 技术实现细节"""
+
+        return description
 
     def get_system_status(self) -> Dict[str, Any]:
         """获取系统状态"""

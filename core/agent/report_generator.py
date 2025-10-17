@@ -3,9 +3,12 @@
 # @Author  : EvanSong
 from __future__ import annotations
 
+import json
 import re
+import time
 from typing import Any, Dict, List, Optional
 
+from core.agent.multi_agent_system import BaseAgent, AgentRole
 from core.model_client import ModelClient
 from core.tool_manager import ToolManager
 from utils.logger import get_logger
@@ -13,7 +16,7 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-class ReportGeneratorAgent:
+class ReportGeneratorAgent(BaseAgent):
     """HTML报告生成器智能体"""
 
     def __init__(
@@ -22,11 +25,10 @@ class ReportGeneratorAgent:
             tool_manager: ToolManager,
             conversation_id: str
     ):
-        self.model_client = model_client
-        self.tool_manager = tool_manager
-        self.conversation_id = conversation_id
+        super().__init__(AgentRole.REPORTER, model_client, tool_manager, conversation_id)
+        # 覆盖系统提示词
         self.system_prompt = self._get_system_prompt()
-        self.messages: List[Dict[str, Any]] = [
+        self.messages = [
             {"role": "system", "content": self.system_prompt}
         ]
 
@@ -41,21 +43,37 @@ class ReportGeneratorAgent:
 4. **响应式设计**：确保报告在各种设备上完美显示
 5. **专业排版**：使用现代Web设计原则和最佳实践
 
+## 重要说明
+当任务描述中包含分析任务结果时，这些结果是前面多个智能体分析的实际结果。系统会提供：
+1. **任务结果摘要**：每个任务的简要概述
+2. **完整分析数据**：所有分析任务的完整结果（可通过任务对象的analysis_results属性访问）
+
+你需要：
+1. **深入分析完整数据**：访问analysis_results获取详细的分析结果
+2. **提取关键洞察**：从完整数据中提取重要的发现和结论
+3. **整合内容**：将不同任务的结果有机整合到报告中
+4. **保持数据完整性**：确保报告基于完整的分析数据，而非简化的摘要
+
+## 数据访问方法
+- 通过任务对象的analysis_results属性访问完整分析结果
+- 每个分析结果包含：任务描述、完整结果、执行时间等信息
+- 优先使用完整数据生成报告，摘要仅用于概览
+
 ## 报告结构模板
 - **标题页**：醒目的标题、项目概述、关键指标
-- **执行摘要**：突出关键发现和业务影响
+- **执行摘要**：突出关键发现和业务影响，基于完整分析数据
 - **分析背景**：项目目标、数据来源、分析方法
-- **详细分析**：分章节展示分析过程和结果
+- **详细分析**：分章节展示各个任务的完整分析过程和结果
 - **可视化展示**：交互式图表和图形化结果
-- **结论建议**：基于数据的洞察和可执行建议
+- **结论建议**：基于所有完整分析数据的洞察和可执行建议
 - **附录**：技术细节、数据字典、参考资料
 
 ## 设计原则
+- **数据完整性**：确保报告反映完整的分析结果
 - **用户体验优先**：确保报告易于阅读和理解
 - **视觉层次清晰**：使用清晰的视觉层次突出重要信息
 - **一致性**：保持整体风格和设计的一致性
 - **可访问性**：确保报告对所有用户友好
-- **性能优化**：优化加载速度和响应性能
 
 ## 技术规范
 - 使用ECharts进行交互式数据可视化
@@ -78,7 +96,7 @@ class ReportGeneratorAgent:
 - 确保代码格式化和注释清晰
 - 测试生成的HTML在不同浏览器中的兼容性
 
-请生成专业、美观、实用的HTML分析报告。"""
+请基于完整的分析结果数据生成专业、美观、实用的HTML分析报告。"""
 
     async def generate_report(
             self,
@@ -142,8 +160,16 @@ class ReportGeneratorAgent:
         # 格式化分析结果
         analysis_summary = ""
         for i, result in enumerate(analysis_results, 1):
+            result_content = result.get('result', '无结果')
+            # 安全处理结果内容，确保是字符串
+            if isinstance(result_content, dict):
+                # 如果是字典，转换为字符串表示
+                result_str = str(result_content)[:500] + "..." if len(str(result_content)) > 500 else str(result_content)
+            else:
+                result_str = str(result_content)[:500] + "..." if len(str(result_content)) > 500 else str(result_content)
+            
             analysis_summary += f"\n{i}. {result.get('task', '未知任务')}:\n"
-            analysis_summary += f"   结果: {result.get('result', '无结果')[:500]}...\n"
+            analysis_summary += f"   结果: {result_str}\n"
 
         # 格式化可视化数据
         viz_summary = ""
@@ -317,6 +343,102 @@ class ReportGeneratorAgent:
 </html>"""
 
         return fallback_html
+
+    async def process_task(self, task) -> Task:
+        """处理报告生成任务（重写基类方法以处理analysis_results）"""
+        logger.info(f"[reporter] 开始处理报告生成任务: {task.description}")
+
+        try:
+            task.status = "in_progress"
+            self.active_tasks[task.id] = task
+
+            # 构建增强的任务提示，包含analysis_results的详细信息
+            enhanced_prompt = self._build_enhanced_prompt(task)
+            
+            self.messages.append({
+                "role": "user",
+                "content": enhanced_prompt
+            })
+
+            logger.info(f"[reporter] 发送增强任务提示，包含 {len(getattr(task, 'analysis_results', []))} 个分析结果")
+
+            # 获取模型响应
+            response = await self.model_client.chat_completion(
+                messages=self.messages,
+                tools=self.tool_manager.get_tool_schemas()
+            )
+
+            if response.get("status") == "error":
+                logger.error(f"[reporter] 模型响应错误: {response.get('error')}")
+                task.status = "failed"
+                task.error = response.get("error")
+            else:
+                message = response["message"]
+                self.messages.append(message)
+
+                logger.info(f"[reporter] 收到模型响应: {message.get('content', '')[:200]}...")
+
+                # 处理工具调用
+                if message.get("tool_calls"):
+                    logger.info(f"[reporter] 检测到工具调用: {len(message['tool_calls'])} 个")
+
+                    for i, tool_call in enumerate(message["tool_calls"]):
+                        function_call = tool_call["function"]
+                        tool_name = function_call["name"]
+                        args = function_call["arguments"]
+
+                        logger.info(f"[reporter] 执行工具 {i + 1}: {tool_name} - 参数: {args}")
+
+                        # 执行工具
+                        result = await self.tool_manager.execute_tool(
+                            tool_name=tool_name,
+                            arguments=json.loads(args),
+                            context={"conversation_id": self.conversation_id}
+                        )
+                        logger.info(f"[reporter] 工具 {tool_name} 执行结果: 成功={result.success}")
+
+                        # 添加工具结果
+                        self.messages.append({
+                            "role": "tool",
+                            "content": json.dumps(result.to_dict(), ensure_ascii=False),
+                            "tool_call_id": tool_call["id"]
+                        })
+
+                task.result = message.get("content", "")
+                task.status = "completed"
+                task.completed_at = time.time()
+
+                logger.info(f"[reporter] 报告生成任务完成")
+
+            return task
+
+        except Exception as e:
+            logger.error(f"[reporter] 处理报告生成任务失败: {e}", exc_info=True)
+            task.status = "failed"
+            task.error = str(e)
+            return task
+
+    def _build_enhanced_prompt(self, task) -> str:
+        """构建增强的任务提示，包含完整的分析结果"""
+        base_prompt = task.description
+        
+        # 如果有完整的分析结果，添加详细信息
+        if hasattr(task, 'analysis_results') and task.analysis_results:
+            enhanced_info = "\n\n## 完整分析数据详情\n"
+            
+            for i, result in enumerate(task.analysis_results, 1):
+                enhanced_info += f"\n### 分析任务 {i}: {result.get('description', '未知任务')}\n"
+                enhanced_info += f"**完整结果:**\n{result.get('result', '无结果')}\n"
+                enhanced_info += f"**执行角色:** {result.get('agent_role', '未知')}\n"
+                
+                # 限制每个任务的显示长度，避免提示过长
+                if len(enhanced_info) > 8000:  # 总长度限制
+                    enhanced_info += "\n...（更多分析结果已省略）"
+                    break
+            
+            base_prompt += enhanced_info
+        
+        return base_prompt
 
     @staticmethod
     async def validate_report(html_content: str) -> Dict[str, Any]:

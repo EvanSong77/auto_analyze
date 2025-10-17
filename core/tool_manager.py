@@ -292,8 +292,7 @@ class ExecCodeTool(Tool):
                 data=result,
                 error=result.get("message") if not success else None,
                 metadata={
-                    "output_count": len(result.get("output", [])),
-                    "image_count": result.get("image_count", 0)
+                    "output_count": len(result.get("output", []))
                 }
             )
 

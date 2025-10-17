@@ -7,7 +7,6 @@ import uuid
 from typing import Dict, Any
 
 from core.filesystem import FileSystemManager
-from core.image_utils import analyze_image
 from core.jupyter_execution import jupyter_execution_engine as execution_engine
 
 logger = logging.getLogger(__name__)
@@ -43,28 +42,12 @@ async def exec_code(code: str, conversation_id: str) -> Dict[str, Any]:
             import asyncio
             await asyncio.sleep(0.1)
 
-        # 检查是否有图片输出并发送到前端
-        image_descriptions = []
-        if "images" in status and status["images"]:
-            for i, img_data in enumerate(status["images"]):
-                # 分析图片内容
-                image_description = await analyze_image(
-                    image_data=img_data["data"],
-                    image_format=img_data["format"],
-                    is_base64=True,
-                    prompt="这是一个数据可视化图表。请详细描述这个图表展示的内容，包括图表类型、轴标签、数据趋势等关键信息。"
-                )
-
-                # 保存图片描述
-                image_descriptions.append({
-                    "index": i,
-                    "description": image_description
-                })
+        # 不再处理图片输出，专注于文本输出
 
         # 注销回调函数
         execution_engine.unregister_output_callback(execution_id)
 
-        # 修改输出收集逻辑，改为列表形式
+        # 修改输出收集逻辑，改为列表形式，移除图片相关字段
         return {
             "status": "success" if status["status"] == "completed" else "error",
             "output": sorted(
@@ -77,9 +60,7 @@ async def exec_code(code: str, conversation_id: str) -> Dict[str, Any]:
                     for o in status["output"]
                 ],
                 key=lambda x: x["timestamp"]
-            ),
-            "image_count": len(status.get("images", [])),
-            "image_descriptions": image_descriptions
+            )
         }
 
     except Exception as e:

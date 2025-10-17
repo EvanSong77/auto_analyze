@@ -105,7 +105,6 @@ warnings.filterwarnings("ignore")"""
             "end_time": None,
             "output": [],
             "error": None,
-            "images": [],  # 存储生成的图片
             "execution_count": None,  # 记录执行计数
             "is_executing": False  # 标记是否正在执行
         }
@@ -170,15 +169,9 @@ warnings.filterwarnings("ignore")"""
                         await self._add_output(execution_id, text, stream_name)
 
                     elif msg_type == 'display_data' or msg_type == 'execute_result':
-                        # 处理富文本输出（包括图片）
+                        # 处理富文本输出（忽略图片，只处理文本）
                         data = content['data']
-                        if 'image/png' in data:
-                            # 保存图片数据
-                            self.executions[execution_id]['images'].append({
-                                'data': data['image/png'],
-                                'format': 'png'
-                            })
-                        elif 'text/plain' in data:
+                        if 'text/plain' in data:
                             await self._add_output(execution_id, data['text/plain'], 'output')
 
                     elif msg_type == 'error':

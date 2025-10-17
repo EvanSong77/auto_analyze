@@ -318,6 +318,7 @@ class FileSystemManager:
             if null_columns:
                 messages.append(f"发现{len(null_columns)}个包含空值的字段")
 
+            logger.info(f"处理表格文件成功，预览表头: {df.columns.tolist()}")
             return {
                 "shape": (total_rows, column_count),  # 显示完整的列数
                 "columns": df.columns.tolist(),  # 显示当前处理的列

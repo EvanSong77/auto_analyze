@@ -58,10 +58,12 @@ class EnhancedAnalysisSystem:
             self.analysis_results = self._collect_analysis_results()
 
             # 3. 生成HTML报告
+            # 安全处理user_query切片，确保是字符串
+            title_suffix = str(user_query)[:50] + "..." if len(str(user_query)) > 50 else str(user_query)
             self.final_report = await self.report_generator.generate_report(
                 user_query=user_query,
                 analysis_results=self.analysis_results,
-                report_title=f"数据分析报告 - {user_query[:50]}..."
+                report_title=f"数据分析报告 - {title_suffix}"
             )
 
             # 4. 验证报告质量

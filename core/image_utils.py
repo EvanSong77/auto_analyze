@@ -3,12 +3,15 @@
 # @Author  : EvanSong
 import asyncio
 import base64
+import logging
 import os
 from typing import Union
 
 from openai import AsyncOpenAI
 
 from schemas.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 async def encode_image_to_base64(image_path: str) -> str:
@@ -86,6 +89,7 @@ async def analyze_image(image_data: Union[str, bytes], image_format: str = "png"
             raise ValueError("不支持的图片数据类型")
 
         try:
+            logger.info("正在调用视觉模型进行图片分析...")
             # 创建异步客户端
             client = AsyncOpenAI(
                 api_key=vision_config.api_key,
