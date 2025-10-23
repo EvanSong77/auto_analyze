@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>毛利异常诊断报告</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .section-title {
+            border-left: 5px solid var(--secondary-color);
+            padding-left: 15px;
+            margin: 2rem 0 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .key-metric {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .key-metric:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .positive { color: var(--success-color); }
+        .negative { color: var(--danger-color); }
+        .neutral { color: var(--warning-color); }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            height: 400px;
+        }
+        
+        .table-responsive {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .conclusion-box {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-left: 5px solid var(--secondary-color);
+        }
+        
+        .recommendation-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+            text-align: center;
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color: var(--secondary-color);
+        }
+        
+        .province-tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .province-negative { background-color: #ffebee; color: #c62828; }
+        .province-positive { background-color: #e8f5e9; color: #2e7d32; }
+        .province-warning { background-color: #fff3e0; color: #ef6c00; }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">毛利异常诊断报告</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#executive-summary">执行摘要</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#analysis">详细分析</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#visualization">可视化</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#conclusion">结论建议</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 标题页 -->
+    <header class="report-header">
+        <div class="container">
+            <h1 class="display-4 fw-bold">毛利异常诊断分析报告</h1>
+            <p class="lead">基于各省份毛利数据的深度分析与异常诊断</p>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="key-metric">
+                        <h5>未达成预测省份</h5>
+                        <div class="metric-value negative">5个</div>
+                        <p>需要重点关注</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="key-metric">
+                        <h5>高于预测省份</h5>
+                        <div class="metric-value positive">20个</div>
+                        <p>表现良好</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="key-metric">
+                        <h5>连续下降省份</h5>
+                        <div class="metric-value neutral">1个</div>
+                        <p>需紧急处理</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 执行摘要 -->
+        <section id="executive-summary">
+            <h2 class="section-title">执行摘要</h2>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="conclusion-box">
+                        <h4>关键发现</h4>
+                        <p>本月毛利异常分析显示，在分析的65个数据点中，存在以下主要问题：</p>
+                        <ul>
+                            <li><strong>5个省份未达成毛利预测</strong>：云南、深圳、上海、国内营销中心公共、华忆芯</li>
+                            <li><strong>1个省份连续2个月毛利下降</strong>：华消科技（从137.34%下降至26.47%）</li>
+                            <li><strong>8个省份当月毛利下降超过1个百分点</strong>：上海、运营公司、宁夏、华视智检、集成客户发展部、海南、华睿科技、销售管理部</li>
+                        </ul>
+                        <p>深圳和国内营销中心公共的毛利偏差率超过20%，需要重点关注。</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <div id="summaryChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 详细分析 -->
+        <section id="analysis">
+            <h2 class="section-title">详细分析</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="conclusion-box">
+                        <h4>未达成预测省份分析</h4>
+                        <p>以下5个省份未达成毛利预测目标：</p>
+                        <div class="mb-3">
+                            <span class="province-tag province-negative">云南(-3.67%)</span>
+                            <span class="province-tag province-negative">深圳(-34.50%)</span>
+                            <span class="province-tag province-negative">上海(-0.52%)</span>
+                            <span class="province-tag province-negative">国内营销中心公共(-21.33%)</span>
+                            <span class="province-tag province-negative">华忆芯(3.65%)</span>
+                        </div>
+                        <p><strong>深圳和国内营销中心公共</strong>的偏差率最大，需要深入分析其业务模式和成本结构。</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="conclusion-box">
+                        <h4>连续下降省份分析</h4>
+                        <p><strong>华消科技</strong>连续两个月毛利大幅下降：</p>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" style="width: 100%">上上期: 137.34%</div>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-warning" style="width: 60%">上期: 35.52%</div>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-danger" style="width: 40%">本期: 26.47%</div>
+                        </div>
+                        <p>这种急剧下降趋势表明存在系统性业务问题，需要立即干预。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="conclusion-box">
+                        <h4>当月毛利下降省份分析</h4>
+                        <p>以下8个省份当月毛利下降超过1个百分点：</p>
+                        <div class="mb-3">
+                            <span class="province-tag province-warning">上海(-1.98%)</span>
+                            <span class="province-tag province-warning">运营公司(-30.36%)</span>
+                            <span class="province-tag province-warning">宁夏(-2.72%)</span>
+                            <span class="province-tag province-warning">华视智检(-23.70%)</span>
+                            <span class="province-tag province-warning">集成客户发展部(-4.11%)</span>
+                            <span class="province-tag province-warning">海南(-1.36%)</span>
+                            <span class="province-tag province-warning">华睿科技(-14.25%)</span>
+                            <span class="province-tag province-warning">销售管理部(-15.62%)</span>
+                        </div>
+                        <p>运营公司、华视智检、华睿科技和销售管理部下降幅度较大，需要深入分析具体原因。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 可视化展示 -->
+        <section id="visualization">
+            <h2 class="section-title">数据可视化</h2>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <div id="deviationChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <div id="trendChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <div id="comparisonChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 结论与建议 -->
+        <section id="conclusion">
+            <h2 class="section-title">结论与建议</h2>
+            
+            <div class="conclusion-box">
+                <h4>主要结论</h4>
+                <p>通过对65个数据点的分析，我们得出以下结论：</p>
+                <ul>
+                    <li>大部分省份（20个）表现良好，高于毛利预测1个百分点以上</li>
+                    <li>存在5个省份未达成预测，其中深圳和国内营销中心公共偏差率较大</li>
+                    <li>华消科技连续两个月毛利大幅下降，需紧急关注</li>
+                    <li>8个省份当月毛利下降超过1个百分点，需进一步分析原因</li>
+                </ul>
+            </div>
+            
+            <h4 class="mt-4">改进建议</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="recommendation-item">
+                        <h5>紧急措施</h5>
+                        <ul>
+                            <li>立即成立专项小组调查华消科技毛利大幅下降原因</li>
+                            <li>对深圳和国内营销中心公共进行业务模式审查</li>
+                            <li>为连续下降省份制定短期恢复计划</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="recommendation-item">
+                        <h5>长期策略</h5>
+                        <ul>
+                            <li>优化毛利预测模型，提高准确性</li>
+                            <li>建立预警机制，及时发现异常趋势</li>
+                            <li>加强成本控制和定价策略优化</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p>毛利异常诊断报告 &copy; 2023 - 数据分析团队</p>
+            <p class="mb-0">报告生成时间: <span id="report-time"></span></p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 设置报告生成时间
+        document.getElementById('report-time').textContent = new Date().toLocaleString('zh-CN');
+        
+        // 初始化图表
+        document.addEventListener('DOMContentLoaded', function() {
+            // 摘要图表
+            const summaryChart = echarts.init(document.getElementById('summaryChart'));
+            const summaryOption = {
+                title: {
+                    text: '省份表现分布',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [
+                    {
+                        name: '省份表现',
+                        type: 'pie',
+                        radius: '70%',
+                        data: [
+                            { value: 5, name: '未达成预测', itemStyle: { color: '#e74c3c' } },
+                            { value: 20, name: '高于预测', itemStyle: { color: '#27ae60' } },
+                            { value: 1, name: '连续下降', itemStyle: { color: '#f39c12' } },
+                            { value: 39, name: '正常表现', itemStyle: { color: '#3498db' } }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            summaryChart.setOption(summaryOption);
+            
+            // 偏差率图表
+            const deviationChart = echarts.init(document.getElementById('deviationChart'));
+            const deviationOption = {
+                title: {
+                    text: '主要省份毛利偏差率',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    name: '偏差率(%)'
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['华忆芯', '上海', '云南', '国内营销中心公共', '深圳']
+                },
+                series: [
+                    {
+                        name: '偏差率',
+                        type: 'bar',
+                        data: [
+                            { value: 3.65, itemStyle: { color: '#e74c3c' } },
+                            { value: -0.52, itemStyle: { color: '#e74c3c' } },
+                            { value: -3.67, itemStyle: { color: '#e74c3c' } },
+                            { value: -21.33, itemStyle: { color: '#e74c3c' } },
+                            { value: -34.50, itemStyle: { color: '#e74c3c' } }
+                        ]
+                    }
+                ]
+            };
+            deviationChart.setOption(deviationOption);
+            
+            // 趋势图表
+            const trendChart = echarts.init(document.getElementById('trendChart'));
+            const trendOption = {
+                title: {
+                    text: '华消科技毛利趋势',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: ['毛利率'],
+                    top: '10%'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '20%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['上上期', '上期', '本期']
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '毛利率(%)'
+                },
+                series: [
+                    {
+                        name: '毛利率',
+                        type: 'line',
+                        data: [137.34, 35.52, 26.47],
+                        itemStyle: {
+                            color: '#e74c3c'
+                        },
+                        lineStyle: {
+                            color: '#e74c3c'
+                        }
+                    }
+                ]
+            };
+            trendChart.setOption(trendOption);
+            
+            // 对比图表
+            const comparisonChart = echarts.init(document.getElementById('comparisonChart'));
+            const comparisonOption = {
+                title: {
+                    text: '当月毛利下降省份对比',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['下降幅度'],
+                    top: '10%'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '20%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['上海', '运营公司', '宁夏', '华视智检', '集成客户发展部', '海南', '华睿科技', '销售管理部']
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '下降幅度(%)'
+                },
+                series: [
+                    {
+                        name: '下降幅度',
+                        type: 'bar',
+                        data: [
+                            { value: -1.98, itemStyle: { color: '#f39c12' } },
+                            { value: -30.36, itemStyle: { color: '#f39c12' } },
+                            { value: -2.72, itemStyle: { color: '#f39c12' } },
+                            { value: -23.70, itemStyle: { color: '#f39c12' } },
+                            { value: -4.11, itemStyle: { color: '#f39c12' } },
+                            { value: -1.36, itemStyle: { color: '#f39c12' } },
+                            { value: -14.25, itemStyle: { color: '#f39c12' } },
+                            { value: -15.62, itemStyle: { color: '#f39c12' } }
+                        ]
+                    }
+                ]
+            };
+            comparisonChart.setOption(comparisonOption);
+            
+            // 响应式调整
+            window.addEventListener('resize', function() {
+                summaryChart.resize();
+                deviationChart.resize();
+                trendChart.resize();
+                comparisonChart.resize();
+            });
+        });
+    </script>
+</body>
+</html>

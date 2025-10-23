@@ -213,6 +213,24 @@ class CollaborationProtocol:
         await self.collaboration_manager.send_message(message)
         return f"可视化结果已共享 ({data_id})"
 
+    async def data_processing_request(self, requester: AgentRole, data_agent: AgentRole,
+                                      analysis_description: str, processing_needs: List[str]) -> str:
+        """请求数据处理服务"""
+        message = CollaborationMessage(
+            sender=requester,
+            receiver=data_agent,
+            message_type=MessageType.TASK_REQUEST.value,
+            content=json.dumps({
+                "action": "data_processing",
+                "analysis_description": analysis_description,
+                "processing_needs": processing_needs,
+                "priority": "normal"
+            }, ensure_ascii=False)
+        )
+
+        await self.collaboration_manager.send_message(message)
+        return f"数据处理请求已发送给 {data_agent.value}"
+
     async def request_feedback(self, requester: AgentRole, reviewer: AgentRole,
                                work_description: str, specific_questions: List[str]) -> str:
         """请求反馈"""
@@ -280,7 +298,7 @@ class EnhancedMultiAgentSystem:
             # 通知团队开始新项目
             await self.collaboration_protocol.notify_completion(
                 AgentRole.MANAGER,
-                [AgentRole.ANALYST, AgentRole.REPORTER, AgentRole.QA],
+                [AgentRole.ANALYST, AgentRole.REPORTER, AgentRole.DATA_AGENT],
                 "项目启动",
                 f"新项目开始：{user_query}"
             )
@@ -303,7 +321,7 @@ class EnhancedMultiAgentSystem:
             # 通知项目完成
             await self.collaboration_protocol.notify_completion(
                 AgentRole.MANAGER,
-                [AgentRole.ANALYST, AgentRole.REPORTER, AgentRole.QA],
+                [AgentRole.ANALYST, AgentRole.REPORTER, AgentRole.DATA_AGENT],
                 "项目完成",
                 "所有分析任务已完成，报告已生成"
             )
@@ -332,13 +350,13 @@ class EnhancedMultiAgentSystem:
             result = await agent.process_task(task)
 
             if result.status == "completed":
-                # 请求其他智能体的反馈
+                # 数据分析师完成分析后，可能请求进一步的数据处理
                 if task.agent_role in [AgentRole.ANALYST]:
-                    await self.collaboration_protocol.request_feedback(
+                    await self.collaboration_protocol.data_processing_request(
                         task.agent_role,
-                        AgentRole.QA,
-                        f"任务完成：{task.description}",
-                        ["请验证结果的准确性", "检查方法是否合理"]
+                        AgentRole.DATA_AGENT,
+                        f"基于分析结果的数据处理：{task.description}",
+                        ["生成可视化图表", "执行深度计算", "准备报告数据"]
                     )
 
             completed_tasks.append(result)
@@ -346,22 +364,22 @@ class EnhancedMultiAgentSystem:
         return completed_tasks
 
     async def _perform_quality_assurance(self, completed_tasks: List):
-        """执行质量保证检查"""
-        qa_agent = self.base_system.agents[AgentRole.QA]
+        """执行数据质量检查（由数据智能体处理）"""
+        data_agent = self.base_system.agents[AgentRole.DATA_AGENT]
 
         for task in completed_tasks:
             if task.status == "completed":
-                # 创建QA任务
-                qa_task = type('Task', (), {
-                    'id': f"qa_{task.id}",
-                    'description': f"验证任务结果：{task.description}",
-                    'agent_role': AgentRole.QA,
+                # 创建数据验证任务
+                validation_task = type('Task', (), {
+                    'id': f"validation_{task.id}",
+                    'description': f"验证数据质量：{task.description}",
+                    'agent_role': AgentRole.DATA_AGENT,
                     'result': None,
                     'status': 'pending'
                 })()
 
-                # 执行QA检查
-                await qa_agent.process_task(qa_task)
+                # 执行数据验证
+                await data_agent.process_task(validation_task)
 
     async def _generate_enhanced_report(self, completed_tasks: List) -> str:
         """生成增强的报告"""

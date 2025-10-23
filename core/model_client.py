@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Optional
 
 import aiohttp
 
-from schemas.config import ModelConfig
+from config.config import ModelConfig
 from utils.logger import get_logger
 
 logger = get_logger(__name__)

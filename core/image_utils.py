@@ -9,7 +9,7 @@ from typing import Union
 
 from openai import AsyncOpenAI
 
-from schemas.config import get_settings
+from config.config import get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import logging
 import os
 
 from core.agent.enhanced_system import create_analysis_system_from_config
-from schemas.config import get_settings
+from config.config import get_settings
 
 
 async def enhanced_analysis(user_query: str, verbose: bool = False):

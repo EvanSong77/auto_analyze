@@ -23,7 +23,7 @@ class AgentRole(Enum):
     MANAGER = "manager"  # 项目经理：任务分解和协调
     ANALYST = "analyst"  # 数据分析师：数据处理和分析
     REPORTER = "reporter"  # 报告生成器：HTML报告整合
-    QA = "qa"  # 质量保证：结果验证
+    DATA_AGENT = "data_agent"  # 数据智能体：统一数据访问和代码执行
 
 
 @dataclass
@@ -166,7 +166,7 @@ class BaseAgent(ABC):
                 task.completed_at = time.time()
 
                 # 对任务结果进行结构化总结
-                if task.agent_role in [AgentRole.ANALYST, AgentRole.QA]:
+                if task.agent_role in [AgentRole.ANALYST]:
                     try:
                         structured_summary = await self._create_structured_summary(task)
                         task.structured_summary = structured_summary
@@ -261,30 +261,36 @@ class ManagerAgent(BaseAgent):
 请以项目管理者的角度思考和行动。"""
 
     async def analyze_requirements(self, user_goal: str) -> List[Task]:
-        """分析用户需求并生成任务列表"""
+        """分析用户需求并生成任务列表（新分工模式）"""
         logger.info(f"[manager] 开始分析用户需求: {user_goal}")
 
         prompt = f"""
 用户目标: {user_goal}
 
-请分析这个需求，并将其分解为具体的分析任务。考虑以下方面：
-1. 数据探索和理解
-2. 数据清洗和预处理
-3. 统计分析和建模
-4. 报告生成
+请分析这个需求，并根据新的分工模式分解任务：
+
+## 分工模式：
+- **数据智能体 (data_agent)**：负责技术执行、数据处理、代码执行
+- **数据分析师 (analyst)**：负责业务分析、洞察发现、建议生成  
+- **报告生成器 (reporter)**：负责报告整合和展示
 
 请以JSON格式返回任务列表，每个任务包含：
 - description: 任务描述
-- agent_role: 负责的智能体角色 (analyst, reporter, qa)
+- agent_role: 负责的智能体角色 (data_agent, analyst, reporter)
 - dependencies: 依赖的前置任务ID列表
 
 示例格式：
 {{
   "tasks": [
     {{
-      "description": "探索数据结构和内容",
-      "agent_role": "analyst",
+      "description": "数据智能体：准备基础数据和初步分析",
+      "agent_role": "data_agent",
       "dependencies": []
+    }},
+    {{
+      "description": "数据分析师：基于数据结果进行业务分析",
+      "agent_role": "analyst", 
+      "dependencies": ["task_1"]
     }}
   ]
 }}
@@ -331,18 +337,24 @@ class ManagerAgent(BaseAgent):
 
         except Exception as e:
             logger.error(f"[manager] 解析任务列表失败: {e}")
-            # 返回默认任务列表（移除可视化任务）
+            # 返回默认任务列表（新分工模式）
             default_tasks = [
                 Task(
                     id="task_1",
-                    description="探索和分析数据",
-                    agent_role=AgentRole.ANALYST
+                    description="数据智能体：准备基础数据和初步技术分析",
+                    agent_role=AgentRole.DATA_AGENT
                 ),
                 Task(
                     id="task_2",
-                    description="生成分析报告",
-                    agent_role=AgentRole.REPORTER,
+                    description="数据分析师：基于技术结果进行业务分析和洞察发现",
+                    agent_role=AgentRole.ANALYST,
                     dependencies=["task_1"]
+                ),
+                Task(
+                    id="task_3",
+                    description="报告生成器：整合分析结果生成专业报告",
+                    agent_role=AgentRole.REPORTER,
+                    dependencies=["task_2"]
                 )
             ]
             logger.info(f"[manager] 使用默认任务列表: {len(default_tasks)} 个任务")
@@ -350,32 +362,31 @@ class ManagerAgent(BaseAgent):
 
 
 class AnalystAgent(BaseAgent):
-    """数据分析师智能体"""
+    """数据分析师智能体 - 专注于业务分析和洞察发现"""
 
     def _get_system_prompt(self) -> str:
-        return """你是一个专业的数据分析师智能体，专注于数据处理和分析。
+        return """你是一个专业的数据分析师智能体，专注于业务分析和洞察发现。
 
 你的专长：
-1. 数据探索：快速理解数据结构、质量和特征
-2. 数据清洗：处理缺失值、异常值、重复数据
-3. 统计分析：描述性统计、相关性分析、假设检验
-4. 特征工程：特征选择、转换、创建新特征
-5. 建模分析：回归、分类、聚类、时间序列分析
+1. **业务理解**：深入理解业务需求和问题背景
+2. **分析规划**：设计分析方案和实验设计
+3. **洞察发现**：从数据中发现业务洞察和模式
+4. **结果解读**：将技术结果转化为业务语言
+5. **建议生成**：基于分析结果提出可执行建议
 
 工作原则：
-- 先探索后分析：全面了解数据后再进行深入分析
-- 自动化处理：使用最佳实践处理常见数据问题
-- 结果验证：通过多种方法验证分析结果的可靠性
-- 文档化：清晰记录每个分析步骤和发现
-- 无需可视化展示：不要进行matplotlib可视化展示，专注于数据的处理和分析
+- 业务导向：始终围绕业务价值进行分析
+- 问题驱动：聚焦解决具体的业务问题
+- 可解释性：确保分析结果对业务人员可理解
+- 行动导向：提供具体的行动建议
 
-工具使用指南：
-- read_directory：了解可用数据文件
-- read_files：读取和分析具体数据文件
-- exec_code：执行复杂的数据分析代码
-- install_package：安装必要的分析库
+工作流程：
+1. 向数据智能体请求所需的数据和分析结果
+2. 基于数据智能体提供的结果进行业务分析
+3. 将技术发现转化为业务洞察
+4. 生成基于数据的业务建议
 
-请专注于提供准确、可复现的数据分析结果。"""
+请专注于业务分析和洞察发现，数据获取和处理由数据智能体负责。"""
 
 
 class ReporterAgent(BaseAgent):
@@ -407,33 +418,31 @@ class ReporterAgent(BaseAgent):
 请生成专业、美观、实用的HTML分析报告。"""
 
 
-class QAAgent(BaseAgent):
-    """质量保证智能体"""
+class DataAgent(BaseAgent):
+    """数据智能体 - 统一数据基础设施和工具执行"""
 
     def _get_system_prompt(self) -> str:
-        return """你是一个专业的质量保证智能体，负责验证分析结果的质量。
+        return """你是一个专业的数据智能体，负责统一管理数据基础设施和工具执行。
 
-你的职责：
-1. 结果验证：检查分析结果的准确性和合理性
-2. 方法评估：验证分析方法的科学性和适用性
-3. 一致性检查：确保各环节结果的一致性
-4. 完整性检查：确认所有需求都得到满足
-5. 问题识别：发现潜在的问题和风险
+核心职责：
+1. **数据基础设施**：管理数据文件访问、存储和组织
+2. **代码执行引擎**：执行所有技术性代码（数据处理、计算、可视化）
+3. **工具协调**：管理和执行所有技术工具调用
+4. **数据质量保证**：确保数据处理的准确性和一致性
 
-验证标准：
-- 准确性：结果必须基于正确的数据和方法
-- 可复现性：分析过程必须可复现
-- 完整性：所有用户需求必须得到满足
-- 一致性：不同部分的结果必须逻辑一致
-- 实用性：结果必须对用户有实际价值
+具体分工：
+- **数据获取**：读取文件、数据库连接、API调用
+- **数据处理**：数据清洗、转换、聚合等基础操作
+- **技术执行**：统计分析、机器学习、可视化生成
+- **结果标准化**：将技术结果整理为标准格式
 
-验证方法：
-- 交叉验证：使用不同方法验证相同结果
-- 敏感性分析：检查结果对假设的敏感性
-- 边界测试：验证边界条件下的结果
-- 合理性检查：基于领域知识评估结果合理性
+协作模式：
+- 数据分析师专注于业务分析和洞察发现
+- 数据智能体专注于技术执行和数据管理
+- 数据分析师向数据智能体请求技术执行服务
+- 数据智能体返回标准化的技术结果
 
-注意：不要进行matplotlib可视化展示，只验证分析结果的质量，请确保最终交付物的高质量和可靠性。"""
+请专注于技术执行和数据管理，确保高效可靠的数据处理。"""
 
 
 class MultiAgentSystem:
@@ -460,8 +469,8 @@ class MultiAgentSystem:
             AgentRole.REPORTER: ReporterAgent(
                 AgentRole.REPORTER, model_client, tool_manager, conversation_id
             ),
-            AgentRole.QA: QAAgent(
-                AgentRole.QA, model_client, tool_manager, conversation_id
+            AgentRole.DATA_AGENT: DataAgent(
+                AgentRole.DATA_AGENT, model_client, tool_manager, conversation_id
             )
         }
 
@@ -470,20 +479,20 @@ class MultiAgentSystem:
         self.final_report: Optional[str] = None
 
     async def process_request(self, user_query: str) -> str:
-        """处理用户请求"""
+        """处理用户请求（支持动态任务规划）"""
         logger.info(f"开始处理用户请求: {user_query}")
 
         try:
-            # 1. 项目经理分析需求
+            # 1. 项目经理分析需求并生成初始任务
             manager = self.agents[AgentRole.MANAGER]
-            tasks = await manager.analyze_requirements(user_query)
+            initial_tasks = await manager.analyze_requirements(user_query)
 
-            # 存储任务
-            for task in tasks:
+            # 存储初始任务
+            for task in initial_tasks:
                 self.tasks[task.id] = task
 
-            # 2. 执行任务（考虑依赖关系）
-            completed_tasks = await self._execute_tasks_with_dependencies(tasks)
+            # 2. 动态执行任务（根据执行结果迭代规划）
+            completed_tasks = await self._execute_tasks_dynamically(initial_tasks)
 
             # 3. 生成最终报告
             self.final_report = await self._generate_final_report(completed_tasks)
@@ -494,72 +503,143 @@ class MultiAgentSystem:
             logger.error(f"多智能体系统执行失败: {e}")
             return f"分析失败: {str(e)}"
 
-    async def _execute_tasks_with_dependencies(self, tasks: List[Task]) -> List[Task]:
-        """考虑依赖关系执行任务"""
+    async def _execute_tasks_dynamically(self, initial_tasks: List[Task]) -> List[Task]:
+        """动态执行任务（根据执行结果迭代规划）"""
         completed_tasks = []
-        round_num = 1
+        pending_tasks = initial_tasks.copy()
+        iteration = 1
+        max_iterations = 5  # 防止无限循环
 
-        logger.info(f"开始执行 {len(tasks)} 个任务，考虑依赖关系")
+        logger.info(f"开始动态任务执行，初始任务: {len(initial_tasks)} 个")
 
-        while tasks:
-            logger.info(f"第 {round_num} 轮执行 - 剩余任务: {len(tasks)}")
+        while pending_tasks and iteration <= max_iterations:
+            logger.info(f"第 {iteration} 轮迭代 - 待处理任务: {len(pending_tasks)}")
 
-            # 找到没有未完成依赖的任务
-            ready_tasks = []
-            for task in tasks:
-                if all(dep in [t.id for t in completed_tasks] for dep in task.dependencies):
-                    ready_tasks.append(task)
-
-            if not ready_tasks:
-                # 检查是否有循环依赖
-                remaining_ids = [t.id for t in tasks]
-                logger.error(f"检测到可能的循环依赖，剩余任务: {remaining_ids}")
-                break
-
-            logger.info(f"本轮可执行任务: {len(ready_tasks)} 个")
-            for task in ready_tasks:
-                logger.info(f"可执行任务: {task.id} - {task.description}")
-
-            # 并行执行就绪的任务
-            tasks_to_execute = []
-            for task in ready_tasks:
-                tasks.remove(task)
-                tasks_to_execute.append(task)
-
-            # 执行任务
-            execution_tasks = []
-            for task in tasks_to_execute:
-                agent = self.agents[task.agent_role]
-                logger.info(f"分配任务 {task.id} 给 {task.agent_role.value}")
-                execution_tasks.append(agent.process_task(task))
-
-            results = await asyncio.gather(*execution_tasks, return_exceptions=True)
-
-            # 并行进行结构化总结
-            summary_tasks = []
-            for result in results:
-                if isinstance(result, Exception):
-                    logger.error(f"任务执行异常: {result}")
-                else:
-                    completed_tasks.append(result)
-                    self.tasks[result.id] = result
-                    logger.info(f"任务 {result.id} 完成 - 状态: {result.status}")
-                    
-                    # 如果需要总结且任务成功完成，并行进行结构化总结
-                    if (result.status == "completed" and 
-                        result.agent_role in [AgentRole.ANALYST, AgentRole.QA] and
-                        hasattr(result, 'structured_summary') and result.structured_summary is None):
-                        summary_tasks.append(self._create_structured_summary_parallel(result))
+            # 1. 执行当前轮次的任务
+            round_completed = await self._execute_round_tasks(pending_tasks)
             
-            # 并行执行总结任务
+            # 2. 将完成的任务移到完成列表
+            for task in round_completed:
+                if task.status == "completed":
+                    completed_tasks.append(task)
+                    if task in pending_tasks:
+                        pending_tasks.remove(task)
+
+            # 3. 并行进行结构化总结
+            summary_tasks = []
+            for task in round_completed:
+                if (task.status == "completed" and 
+                    task.agent_role in [AgentRole.ANALYST] and
+                    hasattr(task, 'structured_summary') and task.structured_summary is None):
+                    summary_tasks.append(self._create_structured_summary_parallel(task))
+            
             if summary_tasks:
                 await asyncio.gather(*summary_tasks, return_exceptions=True)
 
-            round_num += 1
+            # 4. 基于执行结果生成新任务
+            new_tasks = await self._generate_new_tasks_based_on_results(completed_tasks)
+            
+            if new_tasks:
+                logger.info(f"基于执行结果生成 {len(new_tasks)} 个新任务")
+                pending_tasks.extend(new_tasks)
+                for task in new_tasks:
+                    self.tasks[task.id] = task
 
-        logger.info(
-            f"所有任务执行完成 - 成功: {len([t for t in completed_tasks if t.status == 'completed'])} 失败: {len([t for t in completed_tasks if t.status == 'failed'])}")
+            # 5. 检查是否满足终止条件
+            if not new_tasks and not pending_tasks:
+                logger.info("没有新任务生成，执行完成")
+                break
+
+            iteration += 1
+
+        logger.info(f"动态执行完成 - 迭代次数: {iteration-1}, 完成任务: {len(completed_tasks)}")
         return completed_tasks
+
+    async def _execute_round_tasks(self, tasks: List[Task]) -> List[Task]:
+        """执行一轮任务"""
+        completed_tasks = []
+        
+        # 并行执行任务
+        execution_tasks = []
+        for task in tasks:
+            agent = self.agents[task.agent_role]
+            logger.info(f"分配任务 {task.id} 给 {task.agent_role.value}")
+            execution_tasks.append(agent.process_task(task))
+
+        results = await asyncio.gather(*execution_tasks, return_exceptions=True)
+
+        # 处理执行结果
+        for result in results:
+            if isinstance(result, Exception):
+                logger.error(f"任务执行异常: {result}")
+            else:
+                completed_tasks.append(result)
+                self.tasks[result.id] = result
+                logger.info(f"任务 {result.id} 完成 - 状态: {result.status}")
+
+        return completed_tasks
+
+    async def _generate_new_tasks_based_on_results(self, completed_tasks: List[Task]) -> List[Task]:
+        """基于执行结果生成新任务"""
+        new_tasks = []
+        manager = self.agents[AgentRole.MANAGER]
+        
+        # 分析已完成任务的结果
+        for task in completed_tasks:
+            if task.status == "completed" and task.agent_role == AgentRole.ANALYST:
+                # 分析结果是否需要进一步处理
+                if self._needs_further_analysis(task):
+                    new_task = Task(
+                        id=f"deep_analysis_{task.id}",
+                        description=f"深入分析：{task.description}",
+                        agent_role=AgentRole.ANALYST,
+                        dependencies=[task.id]
+                    )
+                    new_tasks.append(new_task)
+                    logger.info(f"生成深入分析任务: {new_task.description}")
+                
+                # 检查是否需要数据验证
+                if self._needs_data_validation(task):
+                    validation_task = Task(
+                        id=f"validation_{task.id}",
+                        description=f"数据验证：{task.description}",
+                        agent_role=AgentRole.DATA_AGENT,
+                        dependencies=[task.id]
+                    )
+                    new_tasks.append(validation_task)
+                    logger.info(f"生成数据验证任务: {validation_task.description}")
+
+        return new_tasks
+
+    def _needs_further_analysis(self, task: Task) -> bool:
+        """判断是否需要进一步分析"""
+        if not task.result:
+            return False
+        
+        result_str = str(task.result).lower()
+        
+        # 如果结果包含需要深入分析的指示
+        indicators = [
+            '需要进一步分析', '深入分析', '更多数据', '复杂模式', 
+            '异常发现', '需要验证', '不确定', '可能', '潜在'
+        ]
+        
+        return any(indicator in result_str for indicator in indicators)
+
+    def _needs_data_validation(self, task: Task) -> bool:
+        """判断是否需要数据验证"""
+        if not task.result:
+            return False
+        
+        result_str = str(task.result).lower()
+        
+        # 如果结果包含数据质量问题
+        issues = [
+            '数据质量', '异常值', '缺失值', '不一致', '可疑',
+            '需要验证', '准确性', '可靠性'
+        ]
+        
+        return any(issue in result_str for issue in issues)
 
     async def _generate_final_report(self, completed_tasks: List[Task]) -> str:
         """生成最终HTML报告"""

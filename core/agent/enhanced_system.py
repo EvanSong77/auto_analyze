@@ -192,7 +192,7 @@ class AnalysisOrchestrator:
     async def create_analysis_session(self, session_id: str) -> EnhancedAnalysisSystem:
         """创建分析会话"""
         from core.model_client import create_client
-        from schemas.config import ModelConfig
+        from config.config import ModelConfig
 
         # 创建模型客户端
         model_config = ModelConfig(**self.model_config)

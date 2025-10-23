@@ -360,6 +360,17 @@ class ReportGeneratorAgent(BaseAgent):
                 "content": enhanced_prompt
             })
 
+            # 确保Reporter能够访问完整的分析数据
+            if hasattr(task, 'analysis_results') and task.analysis_results:
+                logger.info(f"[reporter] 访问到 {len(task.analysis_results)} 个完整分析结果")
+                
+                # 为每个分析结果添加详细数据访问
+                for i, result in enumerate(task.analysis_results):
+                    if 'result' in result and isinstance(result['result'], dict):
+                        # 提取关键信息，避免提示过长
+                        key_info = self._extract_key_analysis_info(result['result'])
+                        logger.info(f"[reporter] 分析结果 {i+1} 关键信息: {key_info[:200]}...")
+
             logger.info(f"[reporter] 发送增强任务提示，包含 {len(getattr(task, 'analysis_results', []))} 个分析结果")
 
             # 获取模型响应
@@ -425,20 +436,89 @@ class ReportGeneratorAgent(BaseAgent):
         # 如果有完整的分析结果，添加详细信息
         if hasattr(task, 'analysis_results') and task.analysis_results:
             enhanced_info = "\n\n## 完整分析数据详情\n"
+            enhanced_info += f"系统已收集 {len(task.analysis_results)} 个分析任务的完整结果数据。"
+            enhanced_info += "请基于这些完整数据进行报告生成，避免产生幻觉。\n"
             
             for i, result in enumerate(task.analysis_results, 1):
                 enhanced_info += f"\n### 分析任务 {i}: {result.get('description', '未知任务')}\n"
-                enhanced_info += f"**完整结果:**\n{result.get('result', '无结果')}\n"
                 enhanced_info += f"**执行角色:** {result.get('agent_role', '未知')}\n"
                 
+                # 智能提取关键信息，避免提示过长
+                result_content = result.get('result', '无结果')
+                if isinstance(result_content, dict):
+                    # 提取结构化数据的关键信息
+                    key_info = self._extract_key_analysis_info(result_content)
+                    enhanced_info += f"**关键发现:**\n{key_info}\n"
+                else:
+                    # 对文本结果进行智能摘要
+                    summary = self._summarize_text_result(str(result_content))
+                    enhanced_info += f"**结果摘要:**\n{summary}\n"
+                
                 # 限制每个任务的显示长度，避免提示过长
-                if len(enhanced_info) > 8000:  # 总长度限制
-                    enhanced_info += "\n...（更多分析结果已省略）"
+                if len(enhanced_info) > 6000:  # 总长度限制
+                    enhanced_info += "\n...（更多分析结果已省略，请参考完整数据）"
                     break
             
             base_prompt += enhanced_info
         
         return base_prompt
+
+    def _extract_key_analysis_info(self, result_dict: dict) -> str:
+        """从分析结果字典中提取关键信息"""
+        key_info = []
+        
+        # 常见的关键字段
+        key_fields = ['key_findings', 'insights', 'conclusions', 'recommendations', 
+                     'summary', 'results', 'analysis', 'findings']
+        
+        for field in key_fields:
+            if field in result_dict:
+                value = result_dict[field]
+                if isinstance(value, list):
+                    key_info.extend([f"- {item}" for item in value[:3]])  # 限制数量
+                elif isinstance(value, str):
+                    key_info.append(f"- {value[:200]}")
+                else:
+                    key_info.append(f"- {str(value)[:200]}")
+        
+        # 如果没有找到标准字段，提取所有非技术性字段
+        if not key_info:
+            for key, value in result_dict.items():
+                if not key.startswith('_') and not isinstance(value, (dict, list)):
+                    key_info.append(f"- {key}: {str(value)[:100]}")
+                if len(key_info) >= 5:  # 限制数量
+                    break
+        
+        return '\n'.join(key_info) if key_info else "无关键信息可提取"
+
+    def _summarize_text_result(self, text: str, max_length: int = 500) -> str:
+        """智能摘要文本结果"""
+        if len(text) <= max_length:
+            return text
+        
+        # 提取关键句子（包含数字、结论性词语的句子）
+        import re
+        sentences = re.split(r'[.!?。！？]+', text)
+        
+        key_sentences = []
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence:
+                continue
+                
+            # 判断是否为关键句子
+            if (re.search(r'\d+', sentence) or  # 包含数字
+                any(word in sentence.lower() for word in ['结论', '发现', '建议', '重要', '关键', '显著', '因此', '所以'])):
+                key_sentences.append(sentence)
+        
+        # 如果有关键句子，使用关键句子
+        if key_sentences:
+            summary = '。'.join(key_sentences[:3]) + '。'
+            if len(summary) <= max_length:
+                return summary
+        
+        # 否则使用开头和结尾
+        return text[:max_length//2] + "..." + text[-max_length//2:]
 
     @staticmethod
     async def validate_report(html_content: str) -> Dict[str, Any]:
