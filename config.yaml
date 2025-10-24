@@ -12,11 +12,6 @@ user_model:
   api_key: NoKeyNeededNow
   endpoint: http://10.1.110.2:8888/deepseek-v3/v1
   model: Deepseek-V3
-vision_model:
-  type: openai
-  api_key: 6fcf3eaf8297ab66c9bc76e54920c8ec
-  endpoint: http://10.1.110.2:8888/glmv/v1
-  model: glm-4.5v
 server:
   host: 127.0.0.1
   port: 8000

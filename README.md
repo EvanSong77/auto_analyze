@@ -76,7 +76,7 @@ python main.py
 
 系统使用 `config.yaml` 文件进行配置，主要配置项包括：
 
-- **模型配置**: DeepSeek V3 和 GLM-4V 模型端点
+- **模型配置**: DeepSeek V3 模型端点
 - **服务器配置**: 本地服务端口设置
 
 ## 核心功能
